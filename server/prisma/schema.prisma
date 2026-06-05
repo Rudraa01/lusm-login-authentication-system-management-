@@ -1,0 +1,85 @@
+// Prisma Schema for LUSM
+// Database: SQLite (easy local setup, no external DB needed)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Developers who register on our platform
+model Developer {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  isBlocked    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  projects     Project[]
+}
+
+// Projects created by developers
+model Project {
+  id             String    @id @default(uuid())
+  name           String
+  description    String    @default("")
+  apiKey         String    @unique
+  allowedOrigins String    @default("") // comma-separated list of allowed origins
+  developerId    String
+  developer      Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  endUsers       EndUser[]
+
+  @@index([developerId])
+}
+
+// End-users who register on developer's apps via our API
+model EndUser {
+  id            String         @id @default(uuid())
+  email         String
+  passwordHash  String
+  name          String         @default("")
+  avatarUrl     String         @default("")
+  isVerified    Boolean        @default(false)
+  isBlocked     Boolean        @default(false)
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  otps          Otp[]
+  refreshTokens RefreshToken[]
+
+  @@unique([email, projectId]) // same email can exist across different projects
+  @@index([projectId])
+}
+
+// OTP records for email verification and password reset
+model Otp {
+  id        String   @id @default(uuid())
+  code      String
+  type      String   // "SIGNUP" or "RESET"
+  expiresAt DateTime
+  usedAt    DateTime?
+  endUserId String
+  endUser   EndUser  @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([endUserId])
+}
+
+// Refresh tokens for end-user session management
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  endUserId String
+  endUser   EndUser  @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([endUserId])
+}

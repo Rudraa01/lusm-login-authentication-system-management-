@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUSM Test Client integration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Base Styles ─── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
+    }
+
+    a {
+      color: #818cf8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: #a5b4fc;
+    }
+
+    /* ─── Header ─── */
+    header {
+      width: 100%;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .api-badge {
+      font-size: 12px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      padding: 6px 12px;
+      border-radius: 99px;
+      color: #a5b4fc;
+      font-family: monospace;
+    }
+
+    /* ─── Container ─── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 480px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .glass-card:hover {
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+    }
+
+    /* ─── Hero Section (Landing) ─── */
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .hero-subtitle {
+      color: #9ca3af;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+
+    .feature-list {
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #d1d5db;
+    }
+
+    .feature-icon {
+      color: #34d399;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: #f3f4f6;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ─── Forms ─── */
+    .form-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .form-desc {
+      color: #9ca3af;
+      font-size: 14px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #d1d5db;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(17, 24, 39, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: rgba(17, 24, 39, 0.8);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
+    .form-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    /* ─── Alerts & Banners ─── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .info-banner {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    /* ─── Dashboard ─── */
+    .user-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+    }
+
+    .user-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .user-email {
+      color: #9ca3af;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .profile-meta {
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    .meta-lbl {
+      color: #9ca3af;
+    }
+
+    .meta-val {
+      font-weight: 600;
+      color: #f3f4f6;
+    }
+
+    /* ─── State Management ─── */
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    /* Footer */
+    footer {
+      padding: 30px;
+      text-align: center;
+      font-size: 13px;
+      color: #4b5563;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* Loading spin */
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #ffffff;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      🔐 <span>LUSM Client App</span>
+    </div>
+    <div class="api-badge" id="apiKeyDisplay">
+      Key: lusm_e2186453...021
+    </div>
+  </header>
+
+  <main>
+    <!-- LANDING VIEW -->
+    <div id="viewLanding" class="glass-card view-section active">
+      <h1 class="hero-title">Secure Auth, Done Simply</h1>
+      <p class="hero-subtitle">Testing LUSM OAuth and User login capabilities with API Key integration.</p>
+      
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>Automatic email verification via short-lived OTP</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>Secured storage and credential management</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>Access control and Developer dashboard block list check</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="switchView('viewSignup')">Create Account</button>
+        <button class="btn btn-secondary" onclick="switchView('viewLogin')">Login</button>
+      </div>
+    </div>
+
+    <!-- SIGNUP VIEW -->
+    <div id="viewSignup" class="glass-card view-section">
+      <h2 class="form-title">Join Us</h2>
+      <p class="form-desc">Create a profile to start authenticating</p>
+      
+      <div id="signupAlert" class="alert alert-error"></div>
+
+      <form id="signupForm" onsubmit="handleSignup(event)">
+        <div class="form-group">
+          <label class="form-label" for="signupName">Full Name</label>
+          <input type="text" id="signupName" class="form-input" placeholder="John Doe" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" class="form-input" placeholder="john@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" class="form-input" placeholder="••••••••" required />
+        </div>
+        <button type="submit" id="signupBtn" class="btn btn-primary">Sign Up</button>
+      </form>
+
+      <div class="form-footer">
+        Already have an account? <a href="#" onclick="switchView('viewLogin')">Login</a>
+      </div>
+    </div>
+
+    <!-- OTP VIEW -->
+    <div id="viewOtp" class="glass-card view-section">
+      <h2 class="form-title">Confirm Email</h2>
+      <p class="form-desc" id="otpDesc">We sent a verification code to your email</p>
+      
+      <div class="info-banner">
+        <strong>Dev Tip:</strong> Since SMTP might be local or unconfigured, check the <strong>LUSM Server Console Logs</strong> in your terminal to view the generated OTP code!
+      </div>
+
+      <div id="otpAlert" class="alert alert-error"></div>
+
+      <form id="otpForm" onsubmit="handleOtpVerification(event)">
+        <div class="form-group">
+          <label class="form-label" for="otpCode">Verification Code (OTP)</label>
+          <input type="text" id="otpCode" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" style="text-align: center; font-size: 20px; letter-spacing: 4px;" required />
+        </div>
+        <button type="submit" id="otpBtn" class="btn btn-primary">Verify & Log In</button>
+      </form>
+    </div>
+
+    <!-- LOGIN VIEW -->
+    <div id="viewLogin" class="glass-card view-section">
+      <h2 class="form-title">Welcome Back</h2>
+      <p class="form-desc">Enter your credentials to access your profile</p>
+      
+      <div id="loginAlert" class="alert alert-error"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="john@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required />
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-primary">Login</button>
+      </form>
+
+      <div class="form-footer">
+        Don't have an account? <a href="#" onclick="switchView('viewSignup')">Sign Up</a>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="viewDashboard" class="glass-card view-section">
+      <div class="user-profile">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <h2 class="user-name" id="userName">User Name</h2>
+        <p class="user-email" id="userEmail">user@example.com</p>
+
+        <div class="profile-meta">
+          <div class="meta-row">
+            <span class="meta-lbl">Account Status</span>
+            <span class="meta-val" style="color: #10b981;">Verified & Active</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-lbl">User ID</span>
+            <span class="meta-val" id="userIdDisplay" style="font-family: monospace; font-size: 11px;">id</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-lbl">Registered</span>
+            <span class="meta-val" id="userRegisteredDate">-</span>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    LUSM Test Integration • Powered by Login User Service Management
+  </footer>
+
+  <script>
+    const API_URL = 'http://localhost:4000/api/v1/auth';
+    const API_KEY = 'lusm_e2186453_5c19a6b9_0dad8021';
+    
+    let pendingVerificationEmail = '';
+
+    // Check existing login session on mount
+    window.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('test_user_token');
+      if (token) {
+        fetchProfile(token);
+      }
+    });
+
+    function switchView(viewId) {
+      document.querySelectorAll('.view-section').forEach(view => {
+        view.classList.remove('active');
+      });
+      document.getElementById(viewId).classList.add('active');
+      clearAlerts();
+    }
+
+    function clearAlerts() {
+      document.querySelectorAll('.alert').forEach(alert => {
+        alert.style.display = 'none';
+        alert.textContent = '';
+      });
+    }
+
+    function showAlert(alertId, message, type = 'error') {
+      const alertEl = document.getElementById(alertId);
+      alertEl.textContent = message;
+      alertEl.className = `alert alert-${type}`;
+      alertEl.style.display = 'block';
+    }
+
+    function setBtnLoading(btnId, isLoading, text) {
+      const btn = document.getElementById(btnId);
+      if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span>`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = text;
+      }
+    }
+
+    // ─── SIGNUP FLOW ───
+    async function handleSignup(e) {
+      e.preventDefault();
+      clearAlerts();
+      
+      const name = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+
+      setBtnLoading('signupBtn', true);
+
+      try {
+        const response = await fetch(`${API_URL}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          pendingVerificationEmail = email;
+          document.getElementById('otpDesc').textContent = `We sent a verification code to ${email}`;
+          switchView('viewOtp');
+        } else {
+          showAlert('signupAlert', data.message || 'Registration failed.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('signupAlert', 'Failed to connect to the authentication server.');
+      } finally {
+        setBtnLoading('signupBtn', false, 'Sign Up');
+      }
+    }
+
+    // ─── OTP FLOW ───
+    async function handleOtpVerification(e) {
+      e.preventDefault();
+      clearAlerts();
+
+      const otp = document.getElementById('otpCode').value;
+      setBtnLoading('otpBtn', true);
+
+      try {
+        const response = await fetch(`${API_URL}/verify-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({ email: pendingVerificationEmail, otp })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('test_user_token', data.data.accessToken);
+          renderProfile(data.data.user);
+          switchView('viewDashboard');
+        } else {
+          showAlert('otpAlert', data.message || 'OTP verification failed.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('otpAlert', 'Failed to connect to the authentication server.');
+      } finally {
+        setBtnLoading('otpBtn', false, 'Verify & Log In');
+      }
+    }
+
+    // ─── LOGIN FLOW ───
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearAlerts();
+
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      setBtnLoading('loginBtn', true);
+
+      try {
+        const response = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('test_user_token', data.data.accessToken);
+          renderProfile(data.data.user);
+          switchView('viewDashboard');
+        } else if (response.status === 403 && data.message.includes('verify')) {
+          // Email not verified, redirect to OTP view
+          pendingVerificationEmail = email;
+          document.getElementById('otpDesc').textContent = `Please verify your email. Code sent to ${email}`;
+          switchView('viewOtp');
+        } else {
+          showAlert('loginAlert', data.message || 'Login failed.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('loginAlert', 'Failed to connect to the authentication server.');
+      } finally {
+        setBtnLoading('loginBtn', false, 'Login');
+      }
+    }
+
+    // ─── PROFILE UTILS ───
+    async function fetchProfile(token) {
+      try {
+        const response = await fetch(`${API_URL}/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-api-key': API_KEY
+          }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          renderProfile(data.data);
+          switchView('viewDashboard');
+        } else {
+          handleLogout();
+        }
+      } catch (err) {
+        console.error(err);
+        handleLogout();
+      }
+    }
+
+    function renderProfile(user) {
+      document.getElementById('userName').textContent = user.name || 'Anonymous User';
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userIdDisplay').textContent = user.id;
+      document.getElementById('userAvatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
+      document.getElementById('userRegisteredDate').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Active';
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('test_user_token');
+      document.getElementById('signupForm').reset();
+      document.getElementById('loginForm').reset();
+      document.getElementById('otpForm').reset();
+      pendingVerificationEmail = '';
+      switchView('viewLanding');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* ═══════════════════════════════════════════════════════
+   Admin Layout Styles
+   ═══════════════════════════════════════════════════════ */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  /* Local variables override for admin styling */
+  --admin-accent: var(--accent-amber);
+  --admin-accent-hover: #f59e0b;
+  --admin-accent-rgb: 245, 158, 11;
+  --admin-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --admin-border-glass: rgba(245, 158, 11, 0.15);
+  --admin-border-glass-hover: rgba(245, 158, 11, 0.35);
+}
+
+/* ─── Sidebar ─────────────────────────────────────────── */
+.admin-sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 50;
+}
+
+.admin-sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-logo-icon {
+  font-size: 20px;
+}
+
+.admin-logo-text {
+  font-weight: 700;
+  font-size: 18px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.admin-sidebar-nav {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.admin-sidebar-link:hover {
+  color: var(--text-primary);
+  background: rgba(var(--admin-accent-rgb), 0.06);
+}
+
+.admin-sidebar-link.active {
+  color: var(--text-white);
+  background: rgba(var(--admin-accent-rgb), 0.12);
+  border: 1px solid rgba(var(--admin-accent-rgb), 0.2);
+}
+
+.admin-sidebar-link.active svg:first-child {
+  color: var(--admin-accent);
+}
+
+.admin-sidebar-link-arrow {
+  margin-left: auto;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--transition-fast);
+}
+
+.admin-sidebar-link:hover .admin-sidebar-link-arrow,
+.admin-sidebar-link.active .admin-sidebar-link-arrow {
+  opacity: 0.5;
+  transform: translateX(0);
+}
+
+/* ─── Sidebar Footer ─────────────────────────────────── */
+.admin-sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.admin-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--admin-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar-user-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar-logout {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ─── Main Content ────────────────────────────────────── */
+.admin-dashboard-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  padding: 32px;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  background-image: radial-gradient(ellipse at top left, rgba(245, 158, 11, 0.12) 0%, transparent 50%),
+                    radial-gradient(ellipse at bottom right, rgba(244, 63, 94, 0.08) 0%, transparent 50%);
+}
+
+/* ─── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    display: none;
+  }
+
+  .admin-dashboard-main {
+    margin-left: 0;
+    padding: 20px;
+  }
+}
