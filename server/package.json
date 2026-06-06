@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
+    "build": "npx prisma generate",
     "start": "npx prisma generate && npx prisma migrate deploy && node src/index.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
