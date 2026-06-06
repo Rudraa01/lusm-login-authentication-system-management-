@@ -101,7 +101,7 @@ router.post('/register', authLimiter, async (req, res) => {
 
     // Send OTP email
     try {
-      await sendOtpEmail(email, otpCode, 'SIGNUP', req.project.name);
+      await sendOtpEmail(email, otpCode, 'SIGNUP', req.project.name, req.project.logoUrl);
     } catch (emailErr) {
       console.error('Failed to send OTP email:', emailErr);
       // Don't fail the request, just log it. In dev, OTP is logged to console.
@@ -391,7 +391,7 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
 
     try {
       // Always send OTP to user.email even if phone was provided
-      await sendOtpEmail(user.email, otpCode, 'RESET', req.project.name);
+      await sendOtpEmail(user.email, otpCode, 'RESET', req.project.name, req.project.logoUrl);
     } catch (emailErr) {
       console.error('Failed to send reset OTP email:', emailErr);
     }
@@ -688,7 +688,7 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     });
 
     try {
-      await sendOtpEmail(user.email, otpCode, 'SIGNUP', req.project.name);
+      await sendOtpEmail(user.email, otpCode, 'SIGNUP', req.project.name, req.project.logoUrl);
     } catch (emailErr) {
       console.error('Failed to resend OTP email:', emailErr);
     }

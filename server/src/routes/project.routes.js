@@ -25,7 +25,7 @@ const generateApiKey = () => {
  */
 router.post('/', authDeveloper, async (req, res) => {
   try {
-    const { name, description, allowedOrigins } = req.body;
+    const { name, description, allowedOrigins, logoUrl } = req.body;
 
     if (!name || name.trim().length === 0) {
       return res.status(400).json({
@@ -52,6 +52,7 @@ router.post('/', authDeveloper, async (req, res) => {
       data: {
         name: name.trim(),
         description: description || '',
+        logoUrl: logoUrl || '',
         apiKey,
         allowedOrigins: allowedOrigins || '',
         developerId: req.developer.id,
@@ -65,6 +66,7 @@ router.post('/', authDeveloper, async (req, res) => {
         id: project.id,
         name: project.name,
         description: project.description,
+        logoUrl: project.logoUrl,
         apiKey: project.apiKey,
         allowedOrigins: project.allowedOrigins,
         createdAt: project.createdAt,
@@ -94,6 +96,7 @@ router.get('/', authDeveloper, async (req, res) => {
       id: p.id,
       name: p.name,
       description: p.description,
+      logoUrl: p.logoUrl,
       apiKey: p.apiKey,
       allowedOrigins: p.allowedOrigins,
       userCount: p._count.endUsers,
@@ -136,6 +139,7 @@ router.get('/:id', authDeveloper, async (req, res) => {
         id: project.id,
         name: project.name,
         description: project.description,
+        logoUrl: project.logoUrl,
         apiKey: project.apiKey,
         allowedOrigins: project.allowedOrigins,
         userCount: project._count.endUsers,
@@ -155,7 +159,7 @@ router.get('/:id', authDeveloper, async (req, res) => {
  */
 router.put('/:id', authDeveloper, async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, logoUrl, allowedOrigins } = req.body;
 
     // Verify ownership
     const project = await prisma.project.findFirst({
@@ -172,6 +176,8 @@ router.put('/:id', authDeveloper, async (req, res) => {
     const updateData = {};
     if (name) updateData.name = name.trim();
     if (description !== undefined) updateData.description = description;
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl.trim();
+    if (allowedOrigins !== undefined) updateData.allowedOrigins = allowedOrigins.trim();
 
     const updated = await prisma.project.update({
       where: { id: req.params.id },
@@ -185,6 +191,7 @@ router.put('/:id', authDeveloper, async (req, res) => {
         id: updated.id,
         name: updated.name,
         description: updated.description,
+        logoUrl: updated.logoUrl,
         apiKey: updated.apiKey,
         allowedOrigins: updated.allowedOrigins,
       },

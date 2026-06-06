@@ -9,7 +9,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [newProject, setNewProject] = useState({ name: '', description: '', allowedOrigins: '' });
+  const [newProject, setNewProject] = useState({ name: '', description: '', allowedOrigins: '', logoUrl: '' });
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ export default function ProjectsPage() {
       const res = await api.post('/api/dash/projects', newProject);
       toast.success('Project created! 🎉');
       setShowModal(false);
-      setNewProject({ name: '', description: '', allowedOrigins: '' });
+      setNewProject({ name: '', description: '', allowedOrigins: '', logoUrl: '' });
       navigate(`/dashboard/projects/${res.data.data.id}`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create project');
@@ -97,10 +97,13 @@ export default function ProjectsPage() {
             <div key={project.id} className="glass-card project-card">
               <div className="project-card-header">
                 <Link to={`/dashboard/projects/${project.id}`} className="project-card-link">
-                  <div className="project-card-icon">
-                    <FolderKanban size={20} />
+                  <div className="project-card-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.05)' }}>
+                    {project.logoUrl ? (
+                      <img src={project.logoUrl} alt={project.name} style={{ width: '24px', height: '24px', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                    ) : null}
+                    <FolderKanban size={20} style={{ display: project.logoUrl ? 'none' : 'block' }} />
                   </div>
-                  <div>
+                  <div style={{ marginLeft: '8px' }}>
                     <h3 className="project-card-name">{project.name}</h3>
                     {project.description && (
                       <p className="project-card-desc">{project.description}</p>
@@ -182,6 +185,19 @@ export default function ProjectsPage() {
                   />
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                     Leave empty to allow all origins (not recommended for production)
+                  </span>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Project Logo URL</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="https://myapp.com/logo.png"
+                    value={newProject.logoUrl}
+                    onChange={(e) => setNewProject({ ...newProject, logoUrl: e.target.value })}
+                  />
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Direct URL to your project logo (used in transaction emails)
                   </span>
                 </div>
               </div>

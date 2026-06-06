@@ -18,6 +18,7 @@ export default function ProjectDetailPage() {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('users');
   const [origins, setOrigins] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [expandedUser, setExpandedUser] = useState(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
   const [activePromptTab, setActivePromptTab] = useState('connect');
@@ -32,6 +33,7 @@ export default function ProjectDetailPage() {
       const res = await api.get(`/api/dash/projects/${id}`);
       setProject(res.data.data);
       setOrigins(res.data.data.allowedOrigins || '');
+      setLogoUrl(res.data.data.logoUrl || '');
     } catch (err) {
       toast.error('Failed to load project');
     } finally {
@@ -67,12 +69,20 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const updateOrigins = async () => {
+  const saveSettings = async () => {
     try {
-      await api.put(`/api/dash/projects/${id}/origins`, { allowedOrigins: origins });
-      toast.success('Origins updated!');
+      const res = await api.put(`/api/dash/projects/${id}`, {
+        logoUrl,
+        allowedOrigins: origins
+      });
+      setProject({ 
+        ...project, 
+        logoUrl: res.data.data.logoUrl, 
+        allowedOrigins: res.data.data.allowedOrigins 
+      });
+      toast.success('Settings saved successfully!');
     } catch (err) {
-      toast.error('Failed to update origins');
+      toast.error('Failed to save settings');
     }
   };
 
@@ -154,9 +164,17 @@ export default function ProjectDetailPage() {
           <Link to="/dashboard/projects" className="btn btn-ghost btn-icon">
             <ArrowLeft size={18} />
           </Link>
-          <div>
-            <h1 className="page-title">{project.name}</h1>
-            {project.description && <p className="page-subtitle">{project.description}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', overflow: 'hidden', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)' }}>
+              {project.logoUrl ? (
+                <img src={project.logoUrl} alt={project.name} style={{ width: '32px', height: '32px', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+              ) : null}
+              <Shield size={24} style={{ display: project.logoUrl ? 'none' : 'block', color: 'var(--accent-primary)' }} />
+            </div>
+            <div>
+              <h1 className="page-title">{project.name}</h1>
+              {project.description && <p className="page-subtitle">{project.description}</p>}
+            </div>
           </div>
         </div>
       </div>
@@ -331,26 +349,63 @@ export default function ProjectDetailPage() {
 
       {/* Settings Tab */}
       {tab === 'settings' && (
-        <div className="glass-card" style={{ marginTop: 20, padding: 24 }}>
-          <h3 style={{ color: 'var(--text-white)', marginBottom: 16, fontWeight: 700 }}>
-            CORS — Allowed Origins
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
-            Only requests from these origins will be accepted. Separate multiple origins with commas.
-            Leave empty to allow all origins (not recommended for production).
-          </p>
-          <div className="form-group" style={{ marginBottom: 16 }}>
-            <textarea
-              className="form-input"
-              placeholder="http://localhost:3000, https://myapp.com"
-              value={origins}
-              onChange={(e) => setOrigins(e.target.value)}
-              rows={3}
-            />
+        <div className="glass-card" style={{ marginTop: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          
+          {/* Logo URL Section */}
+          <div>
+            <h3 style={{ color: 'var(--text-white)', marginBottom: 8, fontWeight: 700 }}>
+              Project Logo
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
+              Specify a direct URL to your project's logo image. This logo will be displayed at the top of all transactional email notifications (like verification OTPs and password resets) sent to your end-users.
+            </p>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-subtle)', overflow: 'hidden', flexShrink: 0 }}>
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                ) : null}
+                <span style={{ display: logoUrl ? 'none' : 'block', fontSize: 12, color: 'var(--text-muted)' }}>No Logo</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="form-label" style={{ marginBottom: '6px' }}>Project Logo URL</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="https://yourdomain.com/logo.png"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
-          <button className="btn btn-primary" onClick={updateOrigins}>
-            Save Origins
-          </button>
+
+          <hr style={{ border: 0, borderTop: '1px solid var(--border-subtle)', margin: 0 }} />
+
+          {/* CORS Origins Section */}
+          <div>
+            <h3 style={{ color: 'var(--text-white)', marginBottom: 8, fontWeight: 700 }}>
+              CORS — Allowed Origins
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
+              Only requests from these origins will be accepted. Separate multiple origins with commas.
+              Leave empty to allow all origins (not recommended for production).
+            </p>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <textarea
+                className="form-input"
+                placeholder="http://localhost:3000, https://myapp.com"
+                value={origins}
+                onChange={(e) => setOrigins(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+            <button className="btn btn-primary" onClick={saveSettings}>
+              Save Settings
+            </button>
+          </div>
         </div>
       )}
 

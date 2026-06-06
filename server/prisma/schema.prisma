@@ -29,6 +29,7 @@ model Project {
   id             String    @id @default(uuid())
   name           String
   description    String    @default("")
+  logoUrl        String    @default("")
   apiKey         String    @unique
   allowedOrigins String    @default("") // comma-separated list of allowed origins
   developerId    String

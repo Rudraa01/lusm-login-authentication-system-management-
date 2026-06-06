@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
+    "start": "npx prisma generate && npx prisma migrate deploy && node src/index.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio",
@@ -21,9 +21,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.10.1",
+    "prisma": "^6.9.0",
     "uuid": "^11.1.0"
   },
-  "devDependencies": {
-    "prisma": "^6.9.0"
-  }
+  "devDependencies": {}
 }

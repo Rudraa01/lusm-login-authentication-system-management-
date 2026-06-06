@@ -223,7 +223,7 @@ router.put('/:id/users/:userId/reset-password', authDeveloper, async (req, res) 
 
     if (generateAndEmail) {
       try {
-        await sendPasswordResetEmail(user.email, finalPassword, project.name);
+        await sendPasswordResetEmail(user.email, finalPassword, project.name, project.logoUrl);
       } catch (err) {
         console.error('Failed to send reset email:', err);
         // Continue anyway
