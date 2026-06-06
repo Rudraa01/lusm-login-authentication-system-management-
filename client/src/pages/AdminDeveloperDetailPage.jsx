@@ -63,6 +63,28 @@ export default function AdminDeveloperDetailPage() {
     } catch (err) {
       console.error('Delete developer error:', err);
       toast.error('Failed to delete developer.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const newPassword = window.prompt("Enter new password for this developer (min 8 chars, 1 uppercase, 1 lowercase, 1 number, exactly 1 @):");
+    if (!newPassword) return; // cancelled or empty
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*@)[A-Za-z0-9@]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error('Password must be min 8 chars, 1 uppercase, 1 lowercase, 1 number, exactly 1 @ symbol');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await api.put(`/api/admin/developers/${id}/reset-password`, { newPassword });
+      toast.success('Developer password reset successfully.');
+    } catch (err) {
+      console.error('Reset password error:', err);
+      toast.error(err.response?.data?.message || 'Failed to reset password.');
+    } finally {
       setActionLoading(false);
     }
   };
@@ -115,6 +137,13 @@ export default function AdminDeveloperDetailPage() {
                 <ShieldAlert size={16} /> Block Developer
               </>
             )}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleResetPassword}
+            disabled={actionLoading}
+          >
+            <Key size={16} /> Reset Password
           </button>
           <button
             className="btn btn-danger"

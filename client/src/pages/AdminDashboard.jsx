@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       <div className="page-header">
         <div>
           <h1 className="page-title admin-page-title">Admin Console</h1>
-          <p className="page-subtitle">Overall health, statistics, and developers of LUSM</p>
+          <p className="page-subtitle">Overall health, statistics, and developers of AuthEasy</p>
         </div>
         <div className="admin-badge">
           <ShieldAlert size={16} />

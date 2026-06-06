@@ -11,6 +11,8 @@ const projectRoutes = require('./routes/project.routes');
 const userManagementRoutes = require('./routes/user.management.routes');
 const publicAuthRoutes = require('./routes/public.auth.routes');
 const adminRoutes = require('./routes/admin.routes');
+const uiRoutes = require('./routes/ui.routes');
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -44,7 +46,7 @@ app.use(generalLimiter);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'LUSM API is running 🚀',
+    message: 'AuthEasy API is running 🚀',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
@@ -55,17 +57,20 @@ app.use('/api/dash', developerAuthRoutes);
 app.use('/api/dash/projects', projectRoutes);
 app.use('/api/dash/projects', userManagementRoutes);
 
-// ─── Super Admin Routes (for LUSM owners) ───────────────────────
+// ─── Super Admin Routes (for AuthEasy owners) ───────────────────────
 app.use('/api/admin', adminRoutes);
 
 // ─── Public Auth API (for end-users via developer's frontend) ──
-app.use('/api/v1/auth', publicAuthRoutes);
+app.use('/api/v1/auth', requestLogger, publicAuthRoutes);
+
+// ─── Pre-built UI API ──────────────────────────────────────────
+app.use('/api/v1/ui', requestLogger, uiRoutes);
 
 // ─── API Documentation Endpoint ────────────────────────────────
 app.get('/api/docs', (req, res) => {
   res.json({
     success: true,
-    message: 'LUSM API Documentation',
+    message: 'AuthEasy API Documentation',
     version: '1.0.0',
     baseUrl: `http://localhost:${PORT}`,
     endpoints: {
@@ -128,8 +133,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════╗');
-  console.log('║          🔐 LUSM API Server                 ║');
-  console.log('║   Login User Service Management             ║');
+  console.log('║        🔐 AuthEasy API Server                ║');
+  console.log('║    Developer Authentication Made Easy        ║');
   console.log('╠══════════════════════════════════════════════╣');
   console.log(`║   Server:    http://localhost:${PORT}           ║`);
   console.log(`║   Health:    http://localhost:${PORT}/api/health ║`);

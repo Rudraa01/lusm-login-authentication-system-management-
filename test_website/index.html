@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LUSM Test Client integration</title>
+  <title>AuthEasy Test Client integration</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <style>
     /* ─── Base Styles ─── */
     * {
@@ -23,7 +25,7 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
-      background-image: 
+      background-image:
         radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
     }
@@ -65,6 +67,7 @@
     .logo span {
       background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -366,19 +369,25 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
+
 <body>
 
   <header>
     <div class="logo">
-      🔐 <span>LUSM Client App</span>
+      🔐 <span>AuthEasy Client App</span>
     </div>
     <div class="api-badge" id="apiKeyDisplay">
-      Key: lusm_e2186453...021
+      Key: autheasy_e3e53eae_c3bc2ef5_f2d19152
     </div>
   </header>
 
@@ -386,8 +395,8 @@
     <!-- LANDING VIEW -->
     <div id="viewLanding" class="glass-card view-section active">
       <h1 class="hero-title">Secure Auth, Done Simply</h1>
-      <p class="hero-subtitle">Testing LUSM OAuth and User login capabilities with API Key integration.</p>
-      
+      <p class="hero-subtitle">Testing AuthEasy OAuth and User login capabilities with API Key integration.</p>
+
       <div class="feature-list">
         <div class="feature-item">
           <span class="feature-icon">✓</span>
@@ -413,7 +422,7 @@
     <div id="viewSignup" class="glass-card view-section">
       <h2 class="form-title">Join Us</h2>
       <p class="form-desc">Create a profile to start authenticating</p>
-      
+
       <div id="signupAlert" class="alert alert-error"></div>
 
       <form id="signupForm" onsubmit="handleSignup(event)">
@@ -441,9 +450,10 @@
     <div id="viewOtp" class="glass-card view-section">
       <h2 class="form-title">Confirm Email</h2>
       <p class="form-desc" id="otpDesc">We sent a verification code to your email</p>
-      
+
       <div class="info-banner">
-        <strong>Dev Tip:</strong> Since SMTP might be local or unconfigured, check the <strong>LUSM Server Console Logs</strong> in your terminal to view the generated OTP code!
+        <strong>Dev Tip:</strong> Since SMTP might be local or unconfigured, check the <strong>AuthEasy Server Console
+          Logs</strong> in your terminal to view the generated OTP code!
       </div>
 
       <div id="otpAlert" class="alert alert-error"></div>
@@ -451,7 +461,8 @@
       <form id="otpForm" onsubmit="handleOtpVerification(event)">
         <div class="form-group">
           <label class="form-label" for="otpCode">Verification Code (OTP)</label>
-          <input type="text" id="otpCode" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" style="text-align: center; font-size: 20px; letter-spacing: 4px;" required />
+          <input type="text" id="otpCode" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6"
+            style="text-align: center; font-size: 20px; letter-spacing: 4px;" required />
         </div>
         <button type="submit" id="otpBtn" class="btn btn-primary">Verify & Log In</button>
       </form>
@@ -461,7 +472,7 @@
     <div id="viewLogin" class="glass-card view-section">
       <h2 class="form-title">Welcome Back</h2>
       <p class="form-desc">Enter your credentials to access your profile</p>
-      
+
       <div id="loginAlert" class="alert alert-error"></div>
 
       <form id="loginForm" onsubmit="handleLogin(event)">
@@ -509,13 +520,13 @@
   </main>
 
   <footer>
-    LUSM Test Integration • Powered by Login User Service Management
+    AuthEasy Test Integration • Powered by AuthEasy
   </footer>
 
   <script>
     const API_URL = 'http://localhost:4000/api/v1/auth';
-    const API_KEY = 'lusm_e2186453_5c19a6b9_0dad8021';
-    
+    const API_KEY = 'autheasy_e3e53eae_c3bc2ef5_f2d19152';
+
     let pendingVerificationEmail = '';
 
     // Check existing login session on mount
@@ -563,7 +574,7 @@
     async function handleSignup(e) {
       e.preventDefault();
       clearAlerts();
-      
+
       const name = document.getElementById('signupName').value;
       const email = document.getElementById('signupEmail').value;
       const password = document.getElementById('signupPassword').value;
@@ -714,4 +725,5 @@
     }
   </script>
 </body>
+
 </html>

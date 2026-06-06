@@ -7,6 +7,7 @@ const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { generateOtp, getOtpExpiry } = require('../utils/otp');
 const { sendOtpEmail } = require('../utils/mailer');
+const { validateStrongPassword } = require('../utils/passwordUtil');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -20,7 +21,7 @@ router.use(validateApiKey);
  */
 router.post('/register', authLimiter, async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, phone, password, name } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -29,15 +30,15 @@ router.post('/register', authLimiter, async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    if (!validateStrongPassword(password)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters.',
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly 1 @ symbol. No other special characters are allowed.',
       });
     }
 
-    // Check if user already exists in this project
-    const existing = await prisma.endUser.findUnique({
+    // Check if user already exists in this project by email
+    let existing = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -45,6 +46,18 @@ router.post('/register', authLimiter, async (req, res) => {
         },
       },
     });
+
+    // Check by phone if provided
+    if (!existing && phone) {
+      existing = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     if (existing && existing.isVerified) {
       return res.status(409).json({
@@ -60,13 +73,14 @@ router.post('/register', authLimiter, async (req, res) => {
       // Update existing unverified user
       user = await prisma.endUser.update({
         where: { id: existing.id },
-        data: { passwordHash, name: name || '' },
+        data: { passwordHash, name: name || '', phone: phone || existing.phone },
       });
     } else {
       // Create new user
       user = await prisma.endUser.create({
         data: {
           email,
+          phone: phone || null,
           passwordHash,
           name: name || '',
           projectId: req.project.id,
@@ -119,11 +133,11 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: 'Email and OTP are required.',
+        message: 'Email/Phone and OTP are required.',
       });
     }
 
-    const user = await prisma.endUser.findUnique({
+    let user = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -131,6 +145,18 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
         },
       },
     });
+
+    if (!user) {
+      // Try by phone
+      user = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone: email,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -217,11 +243,11 @@ router.post('/login', authLimiter, async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required.',
+        message: 'Email/Phone and password are required.',
       });
     }
 
-    const user = await prisma.endUser.findUnique({
+    let user = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -229,6 +255,18 @@ router.post('/login', authLimiter, async (req, res) => {
         },
       },
     });
+
+    if (!user) {
+      // Try by phone
+      user = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone: email,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -308,11 +346,11 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required.',
+        message: 'Email or phone is required.',
       });
     }
 
-    const user = await prisma.endUser.findUnique({
+    let user = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -320,6 +358,18 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
         },
       },
     });
+
+    if (!user) {
+      // Try by phone
+      user = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone: email,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     // Don't reveal if user exists or not
     if (!user) {
@@ -340,7 +390,8 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     });
 
     try {
-      await sendOtpEmail(email, otpCode, 'RESET', req.project.name);
+      // Always send OTP to user.email even if phone was provided
+      await sendOtpEmail(user.email, otpCode, 'RESET', req.project.name);
     } catch (emailErr) {
       console.error('Failed to send reset OTP email:', emailErr);
     }
@@ -370,14 +421,14 @@ router.post('/reset-password', authLimiter, async (req, res) => {
       });
     }
 
-    if (newPassword.length < 6) {
+    if (!validateStrongPassword(newPassword)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters.',
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly 1 @ symbol. No other special characters are allowed.',
       });
     }
 
-    const user = await prisma.endUser.findUnique({
+    let user = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -385,6 +436,18 @@ router.post('/reset-password', authLimiter, async (req, res) => {
         },
       },
     });
+
+    if (!user) {
+      // Try by phone
+      user = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone: email,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -576,11 +639,11 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required.',
+        message: 'Email/Phone is required.',
       });
     }
 
-    const user = await prisma.endUser.findUnique({
+    let user = await prisma.endUser.findUnique({
       where: {
         email_projectId: {
           email,
@@ -588,6 +651,17 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
         },
       },
     });
+
+    if (!user) {
+      user = await prisma.endUser.findUnique({
+        where: {
+          phone_projectId: {
+            phone: email,
+            projectId: req.project.id,
+          },
+        },
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -614,7 +688,7 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     });
 
     try {
-      await sendOtpEmail(email, otpCode, 'SIGNUP', req.project.name);
+      await sendOtpEmail(user.email, otpCode, 'SIGNUP', req.project.name);
     } catch (emailErr) {
       console.error('Failed to resend OTP email:', emailErr);
     }

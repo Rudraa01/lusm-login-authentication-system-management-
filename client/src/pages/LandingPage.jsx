@@ -7,46 +7,46 @@ const features = [
     icon: <Shield size={28} />,
     title: 'Secure Authentication',
     description: 'Industry-standard JWT tokens, bcrypt password hashing, and rate limiting built-in.',
-    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    gradient: 'linear-gradient(135deg, #5c6f84, #70849c)',
   },
   {
     icon: <Mail size={28} />,
     title: 'Email OTP Verification',
     description: 'Automatic OTP emails for signup verification and password resets. Zero setup required.',
-    gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+    gradient: 'linear-gradient(135deg, #475569, #5c6f84)',
   },
   {
     icon: <Users size={28} />,
     title: 'User Management',
     description: 'View, search, block, or delete users from your dashboard. Full control over your user base.',
-    gradient: 'linear-gradient(135deg, #10b981, #059669)',
+    gradient: 'linear-gradient(135deg, #526355, #6b8270)',
   },
   {
     icon: <Code2 size={28} />,
     title: 'Simple REST API',
     description: 'Clean, documented REST endpoints. Just add your API key header and start authenticating.',
-    gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+    gradient: 'linear-gradient(135deg, #8e7a63, #a88b68)',
   },
   {
     icon: <Lock size={28} />,
     title: 'CORS Protection',
     description: 'Whitelist your domains to prevent unauthorized use of your API keys.',
-    gradient: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
+    gradient: 'linear-gradient(135deg, #6b7a8a, #788fa6)',
   },
   {
     icon: <Zap size={28} />,
     title: '100% Free',
     description: 'No hidden charges, no credit card required. Free authentication for every developer.',
-    gradient: 'linear-gradient(135deg, #f43f5e, #f97316)',
+    gradient: 'linear-gradient(135deg, #8c7373, #a68a8a)',
   },
 ];
 
 const codeExample = `// Register a user on your app
-const response = await fetch('https://api.lusm.dev/api/v1/auth/register', {
+const response = await fetch('https://api.autheasy.me/api/v1/auth/register', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': 'lusm_a1b2c3d4_e5f6g7h8_i9j0k1l2'
+    'x-api-key': 'autheasy_a1b2c3d4_e5f6g7h8_i9j0k1l2'
   },
   body: JSON.stringify({
     email: 'user@example.com',
@@ -65,8 +65,9 @@ export default function LandingPage() {
       <nav className="landing-nav">
         <div className="nav-container">
           <Link to="/" className="nav-logo">
-            <div className="logo-icon">🔐</div>
-            <span className="logo-text">LUSM</span>
+            <div className="logo-icon">
+              <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+            </div>
           </Link>
           <div className="nav-links">
             <a href="#features">Features</a>
@@ -81,6 +82,8 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-bg-effects">
+          <div className="hero-grid" />
+          <div className="hero-center-glow" />
           <div className="hero-orb hero-orb-1" />
           <div className="hero-orb hero-orb-2" />
           <div className="hero-orb hero-orb-3" />
@@ -130,6 +133,10 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <section className="features-section" id="features">
+        <div className="section-bg-effects">
+          <div className="features-grid-bg" />
+          <div className="features-glow" />
+        </div>
         <div className="section-container">
           <div className="section-header">
             <span className="section-badge">Features</span>
@@ -161,6 +168,11 @@ export default function LandingPage() {
 
       {/* How it Works Section */}
       <section className="how-section" id="how-it-works">
+        <div className="section-bg-effects">
+          <div className="how-dot-bg" />
+          <div className="how-glow-left" />
+          <div className="how-glow-right" />
+        </div>
         <div className="section-container">
           <div className="section-header">
             <span className="section-badge">How it Works</span>
@@ -170,7 +182,7 @@ export default function LandingPage() {
             <div className="step-card">
               <div className="step-number">01</div>
               <h3>Create Account & Project</h3>
-              <p>Sign up on LUSM, create a project, and get your unique API key instantly.</p>
+              <p>Sign up on AuthEasy, create a project, and get your unique API key instantly.</p>
             </div>
             <div className="step-connector">
               <ArrowRight size={24} />
@@ -194,6 +206,10 @@ export default function LandingPage() {
 
       {/* Code Example Section */}
       <section className="code-section" id="code">
+        <div className="section-bg-effects">
+          <div className="code-pattern-bg" />
+          <div className="code-glow" />
+        </div>
         <div className="section-container">
           <div className="section-header">
             <span className="section-badge">Integration</span>
@@ -216,9 +232,13 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="cta-section">
+        <div className="section-bg-effects">
+          <div className="cta-grid-bg" />
+          <div className="cta-glow" />
+        </div>
         <div className="cta-content">
           <h2>Ready to add authentication to your app?</h2>
-          <p>Join LUSM and get your API key in under a minute. Completely free.</p>
+          <p>Join AuthEasy and get your API key in under a minute. Completely free.</p>
           <Link to="/signup" className="btn btn-primary btn-lg">
             Get Started Free
             <ArrowRight size={18} />
@@ -231,10 +251,10 @@ export default function LandingPage() {
         <div className="footer-container">
           <div className="footer-brand">
             <div className="nav-logo">
-              <div className="logo-icon">🔐</div>
-              <span className="logo-text">LUSM</span>
+              <div className="logo-icon">
+                <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+              </div>
             </div>
-            <p>Login User Service Management — Free Authentication API</p>
           </div>
           <div className="footer-links">
             <a href="#features">Features</a>
@@ -242,7 +262,7 @@ export default function LandingPage() {
             <a href="#code">Integration</a>
           </div>
           <div className="footer-bottom">
-            <p>© {new Date().getFullYear()} LUSM. Made with ❤️ for frontend developers.</p>
+            <p>© {new Date().getFullYear()} AuthEasy. Made with ❤️ for frontend developers.</p>
           </div>
         </div>
       </footer>

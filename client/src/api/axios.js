@@ -14,8 +14,8 @@ api.interceptors.request.use(
   (config) => {
     const isAdminUrl = config.url.startsWith('/api/admin');
     const token = isAdminUrl
-      ? localStorage.getItem('lusm_admin_token')
-      : localStorage.getItem('lusm_token');
+      ? localStorage.getItem('autheasy_admin_token')
+      : localStorage.getItem('autheasy_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,15 +31,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const isAdminUrl = error.config?.url?.startsWith('/api/admin');
       if (isAdminUrl) {
-        localStorage.removeItem('lusm_admin_token');
-        localStorage.removeItem('lusm_admin');
+        localStorage.removeItem('autheasy_admin_token');
+        localStorage.removeItem('autheasy_admin');
         if (window.location.pathname.startsWith('/admin')) {
           window.location.href = '/admin/login';
         }
       } else {
         // Token expired or invalid, redirect to login
-        localStorage.removeItem('lusm_token');
-        localStorage.removeItem('lusm_developer');
+        localStorage.removeItem('autheasy_token');
+        localStorage.removeItem('autheasy_developer');
         if (window.location.pathname.startsWith('/dashboard')) {
           window.location.href = '/login';
         }

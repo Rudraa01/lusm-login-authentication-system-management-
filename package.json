@@ -1,7 +1,7 @@
 {
-  "name": "lusm",
+  "name": "autheasy",
   "version": "1.0.0",
-  "description": "LUSM - Login User Service Management. A free authentication API service for frontend developers.",
+  "description": "AuthEasy - Free Developer Authentication API Service.",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",

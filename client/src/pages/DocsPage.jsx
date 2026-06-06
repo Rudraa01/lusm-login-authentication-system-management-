@@ -190,7 +190,7 @@ export default function DocsPage() {
         <div>
           <h1 className="page-title">API Documentation</h1>
           <p className="page-subtitle">
-            Complete reference for the LUSM Public Authentication API
+            Complete reference for the AuthEasy Public Authentication API
           </p>
         </div>
       </div>

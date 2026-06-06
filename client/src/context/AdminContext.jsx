@@ -16,15 +16,15 @@ export const AdminProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('lusm_admin_token');
-    const savedAdmin = localStorage.getItem('lusm_admin');
+    const token = localStorage.getItem('autheasy_admin_token');
+    const savedAdmin = localStorage.getItem('autheasy_admin');
 
     if (token && savedAdmin) {
       try {
         setAdmin(JSON.parse(savedAdmin));
       } catch {
-        localStorage.removeItem('lusm_admin_token');
-        localStorage.removeItem('lusm_admin');
+        localStorage.removeItem('autheasy_admin_token');
+        localStorage.removeItem('autheasy_admin');
       }
     }
     setLoading(false);
@@ -34,16 +34,16 @@ export const AdminProvider = ({ children }) => {
     const res = await api.post('/api/admin/login', { email, password });
     const { admin: adminData, accessToken } = res.data.data;
 
-    localStorage.setItem('lusm_admin_token', accessToken);
-    localStorage.setItem('lusm_admin', JSON.stringify(adminData));
+    localStorage.setItem('autheasy_admin_token', accessToken);
+    localStorage.setItem('autheasy_admin', JSON.stringify(adminData));
     setAdmin(adminData);
 
     return adminData;
   };
 
   const logout = () => {
-    localStorage.removeItem('lusm_admin_token');
-    localStorage.removeItem('lusm_admin');
+    localStorage.removeItem('autheasy_admin_token');
+    localStorage.removeItem('autheasy_admin');
     setAdmin(null);
   };
 

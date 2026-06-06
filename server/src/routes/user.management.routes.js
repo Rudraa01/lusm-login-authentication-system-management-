@@ -1,5 +1,9 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { validateStrongPassword, generateStrongPassword } = require('../utils/passwordUtil');
+const { sendPasswordResetEmail } = require('../utils/mailer');
 const authDeveloper = require('../middleware/authDeveloper');
 
 const router = express.Router();
@@ -162,7 +166,78 @@ router.delete('/:id/users/:userId', authDeveloper, async (req, res) => {
       message: 'User deleted successfully.',
     });
   } catch (err) {
-    console.error('Delete user error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * PUT /api/dash/projects/:id/users/:userId/reset-password
+ * Reset an end-user's password
+ */
+router.put('/:id/users/:userId/reset-password', authDeveloper, async (req, res) => {
+  try {
+    const { newPassword, generateAndEmail } = req.body;
+
+    let finalPassword = newPassword;
+
+    if (generateAndEmail) {
+      finalPassword = generateStrongPassword();
+    } else {
+      if (!validateStrongPassword(finalPassword)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly 1 @ symbol. No other special characters are allowed.',
+        });
+      }
+    }
+
+    // Verify project ownership
+    const project = await prisma.project.findFirst({
+      where: { id: req.params.id, developerId: req.developer.id },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found.',
+      });
+    }
+
+    const user = await prisma.endUser.findFirst({
+      where: { id: req.params.userId, projectId: req.params.id },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found in this project.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(finalPassword, 12);
+
+    await prisma.endUser.update({
+      where: { id: req.params.userId },
+      data: { passwordHash },
+    });
+
+    if (generateAndEmail) {
+      try {
+        await sendPasswordResetEmail(user.email, finalPassword, project.name);
+      } catch (err) {
+        console.error('Failed to send reset email:', err);
+        // Continue anyway
+      }
+    }
+
+    res.json({
+      success: true,
+      message: generateAndEmail
+        ? `A new password was generated and sent to ${user.email}.`
+        : 'User password reset successfully.',
+    });
+  } catch (err) {
+    console.error('Reset user password error:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 });

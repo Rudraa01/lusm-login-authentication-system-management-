@@ -12,12 +12,15 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import DocsPage from './pages/DocsPage';
 import SettingsPage from './pages/SettingsPage';
+import PrebuiltUIsPage from './pages/PrebuiltUIsPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDevelopersPage from './pages/AdminDevelopersPage';
 import AdminDeveloperDetailPage from './pages/AdminDeveloperDetailPage';
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import AdminUIsPage from './pages/AdminUIsPage';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -137,6 +140,7 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="projects" element={<ProjectsPage />} />
               <Route path="projects/:id" element={<ProjectDetailPage />} />
+              <Route path="uis" element={<PrebuiltUIsPage />} />
               <Route path="docs" element={<DocsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
@@ -163,6 +167,8 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="developers" element={<AdminDevelopersPage />} />
               <Route path="developers/:id" element={<AdminDeveloperDetailPage />} />
+              <Route path="uis" element={<AdminUIsPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
             </Route>
 
             {/* Fallback Redirect */}

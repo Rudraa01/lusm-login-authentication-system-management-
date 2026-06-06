@@ -7,7 +7,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 /**
- * Generate a unique API key in the format: lusm_xxxx_xxxx_xxxx
+ * Generate a unique API key in the format: autheasy_xxxx_xxxx_xxxx
  */
 const generateApiKey = () => {
   const segments = [];
@@ -16,7 +16,7 @@ const generateApiKey = () => {
       uuidv4().replace(/-/g, '').substring(0, 8)
     );
   }
-  return `lusm_${segments.join('_')}`;
+  return `autheasy_${segments.join('_')}`;
 };
 
 /**

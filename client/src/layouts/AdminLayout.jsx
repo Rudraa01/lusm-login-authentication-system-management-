@@ -1,13 +1,15 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import {
-  LayoutDashboard, Users, LogOut, ChevronRight, ShieldAlert
+  LayoutDashboard, Users, BarChart3, LogOut, ChevronRight, ShieldAlert, LayoutTemplate
 } from 'lucide-react';
 import './AdminLayout.css';
 
 const navItems = [
   { path: '/admin', icon: <LayoutDashboard size={20} />, label: 'Overview', end: true },
   { path: '/admin/developers', icon: <Users size={20} />, label: 'Developers' },
+  { path: '/admin/uis', icon: <LayoutTemplate size={20} />, label: 'Pre-built UIs' },
+  { path: '/admin/analytics', icon: <BarChart3 size={20} />, label: 'Analytics' },
 ];
 
 export default function AdminLayout() {
@@ -25,8 +27,9 @@ export default function AdminLayout() {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div className="admin-sidebar-logo">
-            <div className="admin-logo-icon">🛡️</div>
-            <span className="admin-logo-text">LUSM Admin</span>
+            <div className="admin-logo-icon">
+              <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+            </div>
           </div>
         </div>
 

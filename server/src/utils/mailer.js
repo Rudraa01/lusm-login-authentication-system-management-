@@ -11,14 +11,20 @@ const initTransporter = async () => {
 
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     // Use configured SMTP
+    const port = parseInt(process.env.SMTP_PORT) || 587;
+    const secure = port === 465;
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: false,
+      port,
+      secure,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      // Hostinger / custom domain SMTP often needs this to prevent SSL handshake errors
+      tls: {
+        rejectUnauthorized: false
+      }
     });
   } else {
     // Auto-create Ethereal test account for development
@@ -48,7 +54,7 @@ const initTransporter = async () => {
  * @param {string} type - "SIGNUP" or "RESET"
  * @param {string} projectName - Name of the developer's project
  */
-const sendOtpEmail = async (to, otpCode, type, projectName = 'LUSM') => {
+const sendOtpEmail = async (to, otpCode, type, projectName = 'AuthEasy') => {
   const transport = await initTransporter();
 
   const subject =
@@ -71,7 +77,7 @@ const sendOtpEmail = async (to, otpCode, type, projectName = 'LUSM') => {
         <!-- Header -->
         <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);padding:32px 24px;text-align:center;">
           <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">🔐 ${projectName}</h1>
-          <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Powered by LUSM</p>
+          <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Powered by AuthEasy</p>
         </div>
         
         <!-- Content -->
@@ -95,7 +101,7 @@ const sendOtpEmail = async (to, otpCode, type, projectName = 'LUSM') => {
         <!-- Footer -->
         <div style="padding:16px 24px;border-top:1px solid #1e293b;text-align:center;">
           <p style="color:#475569;font-size:12px;margin:0;">
-            © ${new Date().getFullYear()} LUSM — Free Authentication Service
+            © ${new Date().getFullYear()} AuthEasy — Free Authentication Service
           </p>
         </div>
       </div>
@@ -104,13 +110,13 @@ const sendOtpEmail = async (to, otpCode, type, projectName = 'LUSM') => {
   `;
 
   const info = await transport.sendMail({
-    from: `"${projectName} via LUSM" <noreply@lusm.dev>`,
+    from: `"${projectName}" <${process.env.SMTP_USER || 'noreply@autheasy.me'}>`,
     to,
     subject,
     html: htmlContent,
   });
 
-  console.log(`\n🔑 [LUSM] Verification OTP for ${to} is: ${otpCode}\n`);
+  console.log(`\n🔑 [AuthEasy] Verification OTP for ${to} is: ${otpCode}\n`);
 
   // Log Ethereal preview URL in development
   const previewUrl = nodemailer.getTestMessageUrl(info);
@@ -121,7 +127,57 @@ const sendOtpEmail = async (to, otpCode, type, projectName = 'LUSM') => {
   return info;
 };
 
+/**
+ * Send auto-generated new password email
+ * @param {string} to - Recipient email address
+ * @param {string} newPassword - Auto-generated password
+ * @param {string} projectName - Name of the project/platform
+ */
+const sendPasswordResetEmail = async (to, newPassword, projectName = 'AuthEasy') => {
+  const transport = await initTransporter();
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+      <div style="max-width:480px;margin:40px auto;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-radius:16px;border:1px solid #334155;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);padding:32px 24px;text-align:center;">
+          <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">🔐 ${projectName}</h1>
+        </div>
+        <div style="padding:32px 24px;">
+          <p style="color:#cbd5e1;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            An administrator has reset your password. Here is your new temporary password:
+          </p>
+          <div style="background:rgba(99,102,241,0.1);border:2px dashed #6366f1;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px;">
+            <span style="font-size:32px;font-weight:800;letter-spacing:4px;color:#a5b4fc;font-family:'Courier New',monospace;">
+              ${newPassword}
+            </span>
+          </div>
+          <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0;">
+            Please log in and change this password immediately.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const info = await transport.sendMail({
+    from: `"${projectName}" <${process.env.SMTP_USER || 'noreply@autheasy.me'}>`,
+    to,
+    subject: `${projectName} - Your New Password`,
+    html: htmlContent,
+  });
+
+  return info;
+};
+
 module.exports = {
   initTransporter,
   sendOtpEmail,
+  sendPasswordResetEmail,
 };

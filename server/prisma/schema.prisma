@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -17,9 +17,11 @@ model Developer {
   email        String    @unique
   passwordHash String
   isBlocked    Boolean   @default(false)
+  isVerified   Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   projects     Project[]
+  otps         Otp[]
 }
 
 // Projects created by developers
@@ -34,6 +36,7 @@ model Project {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   endUsers       EndUser[]
+  requestLogs    ApiRequestLog[]
 
   @@index([developerId])
 }
@@ -42,6 +45,7 @@ model Project {
 model EndUser {
   id            String         @id @default(uuid())
   email         String
+  phone         String?
   passwordHash  String
   name          String         @default("")
   avatarUrl     String         @default("")
@@ -55,21 +59,25 @@ model EndUser {
   refreshTokens RefreshToken[]
 
   @@unique([email, projectId]) // same email can exist across different projects
+  @@unique([phone, projectId]) // same phone can exist across different projects, NULLs don't violate unique constraint
   @@index([projectId])
 }
 
 // OTP records for email verification and password reset
 model Otp {
-  id        String   @id @default(uuid())
-  code      String
-  type      String   // "SIGNUP" or "RESET"
-  expiresAt DateTime
-  usedAt    DateTime?
-  endUserId String
-  endUser   EndUser  @relation(fields: [endUserId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id          String     @id @default(uuid())
+  code        String
+  type        String     // "SIGNUP" or "RESET"
+  expiresAt   DateTime
+  usedAt      DateTime?
+  endUserId   String?
+  endUser     EndUser?   @relation(fields: [endUserId], references: [id], onDelete: Cascade)
+  developerId String?
+  developer   Developer? @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
 
   @@index([endUserId])
+  @@index([developerId])
 }
 
 // Refresh tokens for end-user session management
@@ -82,4 +90,32 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([endUserId])
+}
+
+// Request logs for tracking API usage and traffic stats
+model ApiRequestLog {
+  id         String   @id @default(uuid())
+  endpoint   String
+  method     String
+  statusCode Int
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+// Pre-built UI components for developers to use
+model PrebuiltUi {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @default("")
+  type        String   // "LOGIN", "SIGNUP", "PROFILE", etc.
+  htmlCode    String   @db.LongText
+  cssCode     String   @db.LongText
+  jsCode      String   @db.LongText
+  reactCode   String   @db.LongText
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

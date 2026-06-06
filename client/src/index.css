@@ -1,70 +1,80 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
 
 /* ═══════════════════════════════════════════════════════
-   LUSM Design System — Dark Glassmorphism Theme
+   AuthEasy Design System — Clerk Tokenized Theme
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  /* Colors - Deep Navy/Indigo Background Palette */
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #0f1629;
-  --bg-tertiary: #151d35;
-  --bg-card: rgba(15, 22, 41, 0.7);
-  --bg-card-hover: rgba(20, 28, 52, 0.85);
-  --bg-glass: rgba(15, 22, 41, 0.5);
-  --bg-input: rgba(15, 22, 41, 0.6);
+  /* Colors - Clerk Pure Black Background Palette */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0c;
+  --bg-tertiary: #131316;
+  --bg-card: rgba(19, 19, 22, 0.75);
+  --bg-card-hover: rgba(29, 29, 34, 0.85);
+  --bg-glass: rgba(19, 19, 22, 0.45);
+  --bg-input: rgba(19, 19, 22, 0.65);
 
-  /* Glass borders */
-  --border-glass: rgba(99, 102, 241, 0.15);
-  --border-glass-hover: rgba(99, 102, 241, 0.35);
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  /* Glass borders (Clerk Color Tokens) */
+  --border-glass: #d9d9de;
+  --border-glass-hover: #131316;
+  --border-subtle: #2f3037;
 
-  /* Accent Colors */
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #818cf8;
-  --accent-secondary: #8b5cf6;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
+  /* Accent Colors (Premium Dull Gold / Taupe Palette) */
+  --accent-primary: #a39581;
+  --accent-primary-hover: #bdae97;
+  --accent-secondary: #857969;
+  --accent-cyan: #697885;
+  --accent-emerald: #698571;
+  --accent-amber: #a38d72;
+  --accent-rose: #85696e;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-  --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  --gradient-danger: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  --gradient-bg: radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                 radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+  --gradient-primary: linear-gradient(135deg, #857969 0%, #a39581 50%, #c7bba9 100%);
+  --gradient-accent: linear-gradient(135deg, #60574d 0%, #a39581 100%);
+  --gradient-success: linear-gradient(135deg, #698571 0%, #83a38c 100%);
+  --gradient-danger: linear-gradient(135deg, #85696e 0%, #a38288 100%);
+  --gradient-bg: radial-gradient(ellipse at top left, rgba(163, 149, 129, 0.12) 0%, transparent 50%),
+                 radial-gradient(ellipse at bottom right, rgba(189, 174, 151, 0.08) 0%, transparent 50%);
 
   /* Text */
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #a5b4fc;
+  --text-primary: #ffffff;
+  --text-secondary: #7e7a75;
+  --text-muted: #6b6661;
+  --text-accent: #c7bba9;
   --text-white: #ffffff;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
-  --shadow-glow-lg: 0 0 60px rgba(99, 102, 241, 0.2);
+  /* Shadows (Clerk Shadow Tokens) */
+  --shadow-sm: rgba(0, 0, 0, 0.08) 0px 2px 3px -1px, rgba(163, 149, 129, 0.12) 0px 0px 0px 0.5px;
+  --shadow-md: rgba(0, 0, 0, 0.1) 0px 0px 0px 0.5px, rgba(0, 0, 0, 0.06) 0px 2px 10px -4px, rgba(0, 0, 0, 0.06) 0px 8px 12px -4px;
+  --shadow-lg: rgba(0, 0, 0, 0.2) 0px 1px 3px 0px;
+  --shadow-glow: 0 0 30px rgba(163, 149, 129, 0.12);
+  --shadow-glow-lg: 0 0 60px rgba(163, 149, 129, 0.2);
 
   /* Spacing */
   --sidebar-width: 260px;
   --header-height: 64px;
 
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 16px;
+  --space-7: 20px;
+  --space-8: 24px;
+
   /* Radius */
-  --radius-sm: 8px;
+  --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --radius-full: 26843500px;
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ─── Reset & Base ────────────────────────────────────── */
@@ -81,7 +91,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Geist', 'suisse', 'suisse Fallback', -apple-system, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -106,21 +116,12 @@ a:hover {
 
 /* ─── Scrollbar ───────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none; /* Safari and Chrome */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 /* ─── Glass Card Component ────────────────────────────── */
@@ -319,6 +320,11 @@ textarea.form-input {
   font-size: 14px;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table tr.active-row td {
+  border-bottom: none;
+  background: var(--bg-glass-hover);
 }
 
 .data-table tbody tr {
@@ -578,4 +584,25 @@ textarea.form-input {
   .stat-card .stat-value {
     font-size: 24px;
   }
+}
+
+/* AuthEasy Logo Image Styles */
+.logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.logo-icon, .admin-logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+}
+
+.logo-icon .logo-img {
+  height: 40px;
+  width: auto;
 }

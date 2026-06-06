@@ -39,12 +39,13 @@ export default function AdminLoginPage() {
 
       <div className="auth-container admin-auth-container animate-slide-up">
         <div className="auth-logo admin-logo">
-          <div className="logo-icon">🛡️</div>
-          <span className="logo-text admin-logo-text-header">LUSM Admin</span>
+          <div className="logo-icon">
+            <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+          </div>
         </div>
 
         <h1 className="auth-title">Super Admin Access</h1>
-        <p className="auth-subtitle">Manage LUSM developers & platform metrics</p>
+        <p className="auth-subtitle">Manage AuthEasy developers & platform metrics</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -55,7 +56,7 @@ export default function AdminLoginPage() {
                 id="admin-login-email"
                 type="email"
                 className="form-input admin-input"
-                placeholder="admin@lusm.dev"
+                placeholder="admin@autheasy.me"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"

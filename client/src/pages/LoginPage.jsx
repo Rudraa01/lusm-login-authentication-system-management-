@@ -8,8 +8,12 @@ import './AuthPages.css';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showOtpConfirm, setShowOtpConfirm] = useState(false);
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const { login, verifyDeveloperOtp, resendDeveloperOtp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,11 +28,116 @@ export default function LoginPage() {
       toast.success('Welcome back! 🎉');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      if (err.response?.data?.unverified) {
+        toast.error('Email not verified. Please verify your email first.');
+        setShowOtpConfirm(true);
+      } else {
+        toast.error(err.response?.data?.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    if (!otp) {
+      toast.error('Please enter the verification code');
+      return;
+    }
+    setLoading(true);
+    try {
+      await verifyDeveloperOtp(email, otp);
+      toast.success('Email verified successfully! Welcome to AuthEasy 🚀');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendLoading(true);
+    try {
+      await resendDeveloperOtp(email);
+      toast.success('Verification code resent successfully! ✉️');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend code');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  if (showOtpConfirm) {
+    return (
+      <div className="auth-page">
+        <div className="auth-bg-effects">
+          <div className="auth-orb auth-orb-1" />
+          <div className="auth-orb auth-orb-2" />
+        </div>
+
+        <div className="auth-container animate-slide-up">
+          <div className="auth-logo">
+            <div className="logo-icon">
+              <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+            </div>
+          </div>
+
+          <h1 className="auth-title">Verify Email</h1>
+          <p className="auth-subtitle">We sent a 6-digit verification code to {email}</p>
+
+          <form onSubmit={handleOtpSubmit} className="auth-form">
+            <div className="form-group">
+              <label className="form-label">Verification Code (OTP)</label>
+              <input
+                id="login-otp"
+                type="text"
+                className="form-input"
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                style={{ textAlign: 'center', fontSize: '18px', letterSpacing: '4px' }}
+                required
+              />
+            </div>
+
+            <button
+              id="login-otp-submit"
+              type="submit"
+              className="btn btn-primary btn-lg auth-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 size={18} className="spin" />
+              ) : (
+                <>
+                  Verify & Continue
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px', color: 'var(--text-secondary)' }}>
+            Didn't receive the email?{' '}
+            <button 
+              onClick={handleResendOtp} 
+              disabled={resendLoading}
+              style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline' }}
+            >
+              {resendLoading ? 'Resending...' : 'Resend Code'}
+            </button>
+          </div>
+
+          <p className="auth-switch" style={{ marginTop: '24px' }}>
+            <a href="#" onClick={() => setShowOtpConfirm(false)}>Back to Login</a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page">
@@ -39,8 +148,9 @@ export default function LoginPage() {
 
       <div className="auth-container animate-slide-up">
         <Link to="/" className="auth-logo">
-          <div className="logo-icon">🔐</div>
-          <span className="logo-text">LUSM</span>
+          <div className="logo-icon">
+            <img src="/logo.png" alt="AuthEasy" className="logo-img" />
+          </div>
         </Link>
 
         <h1 className="auth-title">Welcome back</h1>

@@ -16,15 +16,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('lusm_token');
-    const savedDev = localStorage.getItem('lusm_developer');
+    const token = localStorage.getItem('autheasy_token');
+    const savedDev = localStorage.getItem('autheasy_developer');
 
     if (token && savedDev) {
       try {
         setDeveloper(JSON.parse(savedDev));
       } catch {
-        localStorage.removeItem('lusm_token');
-        localStorage.removeItem('lusm_developer');
+        localStorage.removeItem('autheasy_token');
+        localStorage.removeItem('autheasy_developer');
       }
     }
     setLoading(false);
@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post('/api/dash/login', { email, password });
     const { developer: dev, accessToken } = res.data.data;
 
-    localStorage.setItem('lusm_token', accessToken);
-    localStorage.setItem('lusm_developer', JSON.stringify(dev));
+    localStorage.setItem('autheasy_token', accessToken);
+    localStorage.setItem('autheasy_developer', JSON.stringify(dev));
     setDeveloper(dev);
 
     return dev;
@@ -43,18 +43,28 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (name, email, password) => {
     const res = await api.post('/api/dash/signup', { name, email, password });
+    return res.data;
+  };
+
+  const verifyDeveloperOtp = async (email, otp) => {
+    const res = await api.post('/api/dash/verify-otp', { email, otp });
     const { developer: dev, accessToken } = res.data.data;
 
-    localStorage.setItem('lusm_token', accessToken);
-    localStorage.setItem('lusm_developer', JSON.stringify(dev));
+    localStorage.setItem('autheasy_token', accessToken);
+    localStorage.setItem('autheasy_developer', JSON.stringify(dev));
     setDeveloper(dev);
 
     return dev;
   };
 
+  const resendDeveloperOtp = async (email) => {
+    const res = await api.post('/api/dash/resend-otp', { email });
+    return res.data;
+  };
+
   const logout = () => {
-    localStorage.removeItem('lusm_token');
-    localStorage.removeItem('lusm_developer');
+    localStorage.removeItem('autheasy_token');
+    localStorage.removeItem('autheasy_developer');
     setDeveloper(null);
   };
 
@@ -64,6 +74,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!developer,
     login,
     signup,
+    verifyDeveloperOtp,
+    resendDeveloperOtp,
     logout,
   };
 

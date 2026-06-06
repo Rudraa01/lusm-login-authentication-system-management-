@@ -49,7 +49,7 @@ const validateApiKey = async (req, res, next) => {
         if (!isAllowed) {
           return res.status(403).json({
             success: false,
-            message: `Origin '${origin}' is not allowed for this API key. Add it to your project's allowed origins in the LUSM dashboard.`,
+            message: `Origin '${origin}' is not allowed for this API key. Add it to your project's allowed origins in the AuthEasy dashboard.`,
           });
         }
       }

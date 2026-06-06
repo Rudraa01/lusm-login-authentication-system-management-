@@ -1,6 +1,10 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { validateStrongPassword, generateStrongPassword } = require('../utils/passwordUtil');
 const { generateAccessToken } = require('../utils/jwt');
+const { sendPasswordResetEmail } = require('../utils/mailer');
 const authAdmin = require('../middleware/authAdmin');
 const { authLimiter } = require('../middleware/rateLimiter');
 
@@ -311,6 +315,314 @@ router.delete('/developers/:id', authAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Delete developer error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * GET /api/admin/analytics
+ * Platform analytics and developer leaderboard
+ */
+router.get('/analytics', authAdmin, async (req, res) => {
+  try {
+    const totalDevelopers = await prisma.developer.count();
+    const totalProjects = await prisma.project.count();
+    const totalEndUsers = await prisma.endUser.count();
+    const totalRequests = await prisma.apiRequestLog.count();
+
+    // Requests in the last 24 hours
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const requests24h = await prisma.apiRequestLog.count({
+      where: {
+        createdAt: { gte: oneDayAgo },
+      },
+    });
+
+    // Request counts for the past 7 days (trend line)
+    const dailyRequests = [];
+    for (let i = 6; i >= 0; i--) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      startOfDay.setDate(startOfDay.getDate() - i);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      endOfDay.setDate(endOfDay.getDate() - i);
+
+      const count = await prisma.apiRequestLog.count({
+        where: {
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+      });
+
+      const label = startOfDay.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+      dailyRequests.push({ label, count });
+    }
+
+    // Endpoint distribution
+    // Group logs by endpoint
+    const rawEndpoints = await prisma.apiRequestLog.groupBy({
+      by: ['endpoint'],
+      _count: {
+        _all: true,
+      },
+    });
+
+    const endpointDistribution = rawEndpoints.map(e => ({
+      endpoint: e.endpoint,
+      count: e._count._all,
+    })).sort((a, b) => b.count - a.count);
+
+    // Status code distribution
+    const rawStatuses = await prisma.apiRequestLog.groupBy({
+      by: ['statusCode'],
+      _count: {
+        _all: true,
+      },
+    });
+
+    const statusDistribution = {
+      success: 0, // 2xx
+      clientError: 0, // 4xx
+      serverError: 0, // 5xx
+    };
+
+    rawStatuses.forEach(s => {
+      const code = s.statusCode;
+      const count = s._count._all;
+      if (code >= 200 && code < 300) {
+        statusDistribution.success += count;
+      } else if (code >= 400 && code < 500) {
+        statusDistribution.clientError += count;
+      } else if (code >= 500) {
+        statusDistribution.serverError += count;
+      }
+    });
+
+    // Developer leaderboard: List developers with project count, user count, request count
+    const developersList = await prisma.developer.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        isBlocked: true,
+        projects: {
+          select: {
+            id: true,
+            _count: {
+              select: {
+                endUsers: true,
+                requestLogs: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const leaderboard = developersList.map(dev => {
+      const projectCount = dev.projects.length;
+      const userCount = dev.projects.reduce((sum, p) => sum + p._count.endUsers, 0);
+      const requestCount = dev.projects.reduce((sum, p) => sum + p._count.requestLogs, 0);
+
+      return {
+        id: dev.id,
+        name: dev.name,
+        email: dev.email,
+        createdAt: dev.createdAt,
+        isBlocked: dev.isBlocked,
+        projectCount,
+        userCount,
+        requestCount,
+      };
+    }).sort((a, b) => b.userCount - a.userCount); // sort by user count
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalDevelopers,
+          totalProjects,
+          totalEndUsers,
+          totalRequests,
+          requests24h,
+          avgUsersPerProject: totalProjects > 0 ? (totalEndUsers / totalProjects).toFixed(1) : 0,
+        },
+        dailyRequests,
+        endpointDistribution,
+        statusDistribution,
+        leaderboard,
+      },
+    });
+  } catch (err) {
+    console.error('Get admin analytics error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * PUT /api/admin/developers/:id/reset-password
+ * Reset a developer's password
+ */
+router.put('/developers/:id/reset-password', authAdmin, async (req, res) => {
+  try {
+    const { newPassword, generateAndEmail } = req.body;
+
+    let finalPassword = newPassword;
+
+    if (generateAndEmail) {
+      finalPassword = generateStrongPassword();
+    } else {
+      if (!validateStrongPassword(finalPassword)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly 1 @ symbol. No other special characters are allowed.',
+        });
+      }
+    }
+
+    const developer = await prisma.developer.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!developer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Developer not found.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(finalPassword, 12);
+
+    await prisma.developer.update({
+      where: { id: req.params.id },
+      data: { passwordHash },
+    });
+
+    if (generateAndEmail) {
+      try {
+        await sendPasswordResetEmail(developer.email, finalPassword, 'AuthEasy Dashboard');
+      } catch (err) {
+        console.error('Failed to send reset email:', err);
+        // Continue anyway, but maybe inform the client
+      }
+    }
+
+    res.json({
+      success: true,
+      message: generateAndEmail 
+        ? `A new password was generated and sent to ${developer.email}.` 
+        : 'Developer password reset successfully.',
+    });
+  } catch (err) {
+    console.error('Reset developer password error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * GET /api/admin/uis
+ * List all pre-built UIs
+ */
+router.get('/uis', authAdmin, async (req, res) => {
+  try {
+    const uis = await prisma.prebuiltUi.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ success: true, data: uis });
+  } catch (err) {
+    console.error('List UIs error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/admin/uis
+ * Add a new pre-built UI
+ */
+router.post('/uis', authAdmin, async (req, res) => {
+  try {
+    const { title, description, type, htmlCode, cssCode, jsCode, reactCode } = req.body;
+
+    if (!title || !type) {
+      return res.status(400).json({ success: false, message: 'Title and type are required.' });
+    }
+
+    const ui = await prisma.prebuiltUi.create({
+      data: {
+        title,
+        description: description || '',
+        type,
+        htmlCode: htmlCode || '',
+        cssCode: cssCode || '',
+        jsCode: jsCode || '',
+        reactCode: reactCode || '',
+      },
+    });
+
+    res.status(201).json({ success: true, message: 'Pre-built UI added successfully.', data: ui });
+  } catch (err) {
+    console.error('Create UI error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * PUT /api/admin/uis/:id
+ * Update an existing pre-built UI
+ */
+router.put('/uis/:id', authAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, type, htmlCode, cssCode, jsCode, reactCode } = req.body;
+
+    const ui = await prisma.prebuiltUi.findUnique({ where: { id } });
+    if (!ui) {
+      return res.status(404).json({ success: false, message: 'UI not found.' });
+    }
+
+    const updated = await prisma.prebuiltUi.update({
+      where: { id },
+      data: {
+        title: title !== undefined ? title : ui.title,
+        description: description !== undefined ? description : ui.description,
+        type: type !== undefined ? type : ui.type,
+        htmlCode: htmlCode !== undefined ? htmlCode : ui.htmlCode,
+        cssCode: cssCode !== undefined ? cssCode : ui.cssCode,
+        jsCode: jsCode !== undefined ? jsCode : ui.jsCode,
+        reactCode: reactCode !== undefined ? reactCode : ui.reactCode,
+      },
+    });
+
+    res.json({ success: true, message: 'Pre-built UI updated successfully.', data: updated });
+  } catch (err) {
+    console.error('Update UI error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * DELETE /api/admin/uis/:id
+ * Delete a pre-built UI
+ */
+router.delete('/uis/:id', authAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ui = await prisma.prebuiltUi.findUnique({ where: { id } });
+    if (!ui) {
+      return res.status(404).json({ success: false, message: 'UI not found.' });
+    }
+
+    await prisma.prebuiltUi.delete({ where: { id } });
+
+    res.json({ success: true, message: 'Pre-built UI deleted successfully.' });
+  } catch (err) {
+    console.error('Delete UI error:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 });

@@ -33,9 +33,9 @@ export default function SettingsPage() {
       toast.success('Settings saved!');
 
       // Update local storage
-      const saved = JSON.parse(localStorage.getItem('lusm_developer') || '{}');
+      const saved = JSON.parse(localStorage.getItem('autheasy_developer') || '{}');
       if (data.name) saved.name = data.name;
-      localStorage.setItem('lusm_developer', JSON.stringify(saved));
+      localStorage.setItem('autheasy_developer', JSON.stringify(saved));
 
       setCurrentPassword('');
       setNewPassword('');
