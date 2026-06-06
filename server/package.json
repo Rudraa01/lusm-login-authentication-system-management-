@@ -21,9 +21,8 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^8.0.10",
     "prisma": "^6.9.0",
     "uuid": "^11.1.0"
-  },
-  "devDependencies": {}
+  }
 }
