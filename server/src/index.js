@@ -49,3 +49,6 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+const projectRoutes = require('./routes/project.routes');
+
+app.use('/api/dash/projects', projectRoutes);
