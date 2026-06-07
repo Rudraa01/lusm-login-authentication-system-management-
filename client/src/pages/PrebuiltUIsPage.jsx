@@ -14,10 +14,39 @@ export default function PrebuiltUIsPage() {
   const [previewMode, setPreviewMode] = useState('desktop'); // desktop, mobile
   const [downloading, setDownloading] = useState(false);
   const iframeRef = useRef(null);
+  
+  const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
     fetchUis();
   }, []);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    
+    const updateSize = () => {
+      if (wrapperRef.current) {
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const padding = 48; // 24px padding on each side
+        setContainerSize({
+          width: Math.max(rect.width - padding, 200),
+          height: Math.max(rect.height - padding, 200)
+        });
+      }
+    };
+
+    updateSize();
+    
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+    observer.observe(wrapperRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [selectedUi, previewMode]);
 
   const fetchUis = async () => {
     try {
@@ -180,6 +209,16 @@ ${ui.htmlCode || ''}
     }
   };
 
+  const targetWidth = previewMode === 'desktop' ? 1280 : 375;
+  const targetHeight = previewMode === 'desktop' ? 800 : 667;
+
+  const scaleX = containerSize.width / targetWidth;
+  const scaleY = containerSize.height / targetHeight;
+  const scale = Math.min(scaleX, scaleY, 1);
+
+  const frameWidth = targetWidth * scale;
+  const frameHeight = targetHeight * scale;
+
   return (
     <div className="dashboard-page animate-fade-in" style={{ height: 'calc(100vh - 80px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="dashboard-page-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
@@ -272,15 +311,110 @@ ${ui.htmlCode || ''}
                 </div>
 
                 {/* Iframe Frame Box */}
-                <div className="ui-device-frame-wrapper">
-                  <div className={`ui-device-frame ${previewMode === 'desktop' ? 'ui-device-frame-desktop' : 'ui-device-frame-mobile'}`}>
-                    <iframe
-                      ref={iframeRef}
-                      title="UI Preview"
-                      srcDoc={getIframeSource(selectedUi)}
-                      style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#0f172a' }}
-                      sandbox="allow-scripts allow-forms"
-                    />
+                <div ref={wrapperRef} className="ui-device-frame-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                  <div 
+                    style={{ 
+                      width: `${frameWidth}px`, 
+                      height: `${frameHeight}px`, 
+                      position: 'relative', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      overflow: 'visible'
+                    }}
+                  >
+                    <div 
+                      className={`ui-device-frame ${previewMode === 'desktop' ? 'ui-device-frame-desktop' : 'ui-device-frame-mobile'}`}
+                      style={{ 
+                        width: `${targetWidth}px`, 
+                        height: `${targetHeight}px`, 
+                        transform: `scale(${scale})`, 
+                        transformOrigin: 'center center',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        marginTop: `-${targetHeight / 2}px`,
+                        marginLeft: `-${targetWidth / 2}px`,
+                        border: previewMode === 'desktop' ? '12px solid #1e293b' : '10px solid #1e293b',
+                        boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 255, 255, 0.05)',
+                        borderRadius: '20px',
+                        backgroundColor: '#0f172a',
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {/* Browser Chrome for Desktop Preview */}
+                      {previewMode === 'desktop' && (
+                        <div style={{
+                          height: '36px',
+                          background: '#1e293b',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '0 16px',
+                          gap: '8px',
+                          flexShrink: 0
+                        }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', opacity: 0.8 }}></div>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eab308', opacity: 0.8 }}></div>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22c55e', opacity: 0.8 }}></div>
+                          <div style={{
+                            flex: 1,
+                            background: 'rgba(0, 0, 0, 0.25)',
+                            borderRadius: '6px',
+                            height: '22px',
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'monospace',
+                            maxWidth: '450px',
+                            margin: '0 auto',
+                            border: '1px solid rgba(255, 255, 255, 0.03)'
+                          }}>
+                            localhost:3000/auth/login
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Status Bar for Mobile Preview */}
+                      {previewMode === 'mobile' && (
+                        <div style={{
+                          height: '26px',
+                          background: '#1e293b',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0 16px',
+                          fontSize: '11px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          fontFamily: 'sans-serif',
+                          fontWeight: 500,
+                          flexShrink: 0
+                        }}>
+                          <span>9:41</span>
+                          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '9px' }}>5G</span>
+                            <div style={{ width: '14px', height: '7px', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '2px', padding: '1px', display: 'flex', alignItems: 'center' }}>
+                              <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.7)', borderRadius: '1px' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <iframe
+                        ref={iframeRef}
+                        title="UI Preview"
+                        srcDoc={getIframeSource(selectedUi)}
+                        style={{ width: '100%', flex: 1, border: 'none', backgroundColor: '#0f172a' }}
+                        sandbox="allow-scripts allow-forms"
+                      />
+                    </div>
                   </div>
                 </div>
                 
