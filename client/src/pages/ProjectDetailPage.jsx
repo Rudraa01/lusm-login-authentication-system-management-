@@ -393,7 +393,7 @@ export default function ProjectDetailPage() {
             <div className="form-group" style={{ marginBottom: 0 }}>
               <textarea
                 className="form-input"
-                placeholder="http://localhost:3000, https://myapp.com"
+                placeholder="https://local.dev:3000, https://myapp.com"
                 value={origins}
                 onChange={(e) => setOrigins(e.target.value)}
                 rows={3}
@@ -452,44 +452,44 @@ export default function ProjectDetailPage() {
                     <pre className="ai-prompt-code-content">{`You are an expert developer. I want to integrate authentication into my application using the AuthEasy authentication service.
 
 Here are the configuration details:
-- **API Base URL**: http://localhost:4000
+- **API Base URL**: ${window.location.origin}
 - **API Key**: ${project.apiKey}
 - **Project ID**: ${project.id}
 
 Please create an authentication service module (e.g., \`authService.js\` or \`auth.service.ts\`) using fetch or axios. It should implement the following API calls to the AuthEasy backend:
 
 1. **User Registration**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/register\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/register\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "password": "...", "name": "...", "contactNumber": "..." }\`
    - **Note**: The backend enforces a strict password policy: Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other special characters are allowed). Include client-side validation for this rule.
    - **Response**: Returns \`{ success: true, message: "...", data: { userId: "...", email: "...", isVerified: false } }\`.
 
 2. **Verify OTP (Signup Verification)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/verify-otp\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/verify-otp\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "otp": "..." }\`
    - **Response**: Returns token credentials: \`{ success: true, data: { user: { id, email, name, contactNumber }, accessToken, refreshToken } }\`.
 
 3. **User Login**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/login\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/login\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "password": "..." }\`
    - **Response**: Returns tokens: \`{ success: true, data: { user, accessToken, refreshToken } }\`.
 
 4. **Forgot Password (Request Reset OTP)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/forgot-password\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/forgot-password\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "..." }\` // Can be email OR phone
 
 5. **Reset Password (Submit Reset OTP)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/reset-password\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/reset-password\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "otp": "...", "newPassword": "..." }\` // email can be email OR phone
    - **Note**: The backend password policy also applies here.
 
 6. **Get Current User Profile**
-   - **Endpoint**: \`GET http://localhost:4000/api/v1/auth/me\`
+   - **Endpoint**: \`GET ${window.location.origin}/api/v1/auth/me\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Authorization": "Bearer <accessToken>" }\`
 
 Please write complete, production-grade helper code, configure session management (saving the tokens securely in localStorage or cookies), and export these methods so I can easily use them in my application.`}</pre>
@@ -508,7 +508,7 @@ Please write complete, production-grade helper code, configure session managemen
                     <pre className="ai-prompt-code-content">{`You are a senior UI/UX engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing application, integrated with the AuthEasy backend service.
 
 Here are the integration details:
-- **API Base URL**: http://localhost:4000
+- **API Base URL**: ${window.location.origin}
 - **API Key**: \${project.apiKey}
 - **Project ID**: \${project.id}
 
@@ -520,7 +520,7 @@ Your task is to:
    - **Login Page** (Fields: Email or Phone Number, Password).
    - **Forgot Password Screen** (Enter email or phone number to send OTP).
    - **Reset Password Screen** (Enter OTP and new strong password).
-3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`http://localhost:4000/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: \${project.apiKey}\` header.
+3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`${window.location.origin}/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: \${project.apiKey}\` header.
 4. **Visual & Styling Requirements**: Make the UI look extremely premium, mimicking high-end authentication designs (like Clerk, Vercel, or Stripe). Include subtle animations (fade-in, slide-up, loading spinner states) and ensure the layout is fully responsive and integrates perfectly with my application's theme and styles. Please build everything directly in the app's existing visual design language.`}</pre>
                   </div>
                 </>
@@ -538,51 +538,51 @@ Your task is to:
                     ? `You are an expert developer. I want to integrate authentication into my application using the AuthEasy authentication service.
 
 Here are the configuration details:
-- **API Base URL**: http://localhost:4000
+- **API Base URL**: ${window.location.origin}
 - **API Key**: ${project.apiKey}
 - **Project ID**: ${project.id}
 
 Please create an authentication service module (e.g., \`authService.js\` or \`auth.service.ts\`) using fetch or axios. It should implement the following API calls to the AuthEasy backend:
 
 1. **User Registration**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/register\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/register\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "password": "...", "name": "..." }\`
    - **Note**: The backend enforces a strict password policy: Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other special characters are allowed). Include client-side validation for this rule.
    - **Response**: Returns \`{ success: true, message: "...", data: { userId: "...", email: "...", isVerified: false } }\`.
 
 2. **Verify OTP (Signup Verification)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/verify-otp\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/verify-otp\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "otp": "..." }\`
    - **Response**: Returns token credentials: \`{ success: true, data: { user: { id, email, name }, accessToken, refreshToken } }\`.
 
 3. **User Login**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/login\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/login\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "password": "..." }\`
    - **Response**: Returns tokens: \`{ success: true, data: { user, accessToken, refreshToken } }\`.
 
 4. **Forgot Password (Request Reset OTP)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/forgot-password\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/forgot-password\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "..." }\`
 
 5. **Reset Password (Submit Reset OTP)**
-   - **Endpoint**: \`POST http://localhost:4000/api/v1/auth/reset-password\`
+   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/reset-password\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
    - **Body**: \`{ "email": "...", "otp": "...", "newPassword": "..." }\`
    - **Note**: The backend password policy also applies here.
 
 6. **Get Current User Profile**
-   - **Endpoint**: \`GET http://localhost:4000/api/v1/auth/me\`
+   - **Endpoint**: \`GET ${window.location.origin}/api/v1/auth/me\`
    - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Authorization": "Bearer <accessToken>" }\`
 
 Please write complete, production-grade helper code, configure session management (saving the tokens securely in localStorage or cookies), and export these methods so I can easily use them in my application.`
                     : `You are a senior UI/UX engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing application, integrated with the AuthEasy backend service.
 
 Here are the integration details:
-- **API Base URL**: http://localhost:4000
+- **API Base URL**: ${window.location.origin}
 - **API Key**: ${project.apiKey}
 - **Project ID**: ${project.id}
 
@@ -594,7 +594,7 @@ Your task is to:
    - **Login Page** (Fields: Email, Password).
    - **Forgot Password Screen** (Enter email to send OTP).
    - **Reset Password Screen** (Enter OTP and new strong password).
-3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`http://localhost:4000/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: ${project.apiKey}\` header.
+3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`${window.location.origin}/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: ${project.apiKey}\` header.
 4. **Visual & Styling Requirements**: Make the UI look extremely premium, mimicking high-end authentication designs (like Clerk, Vercel, or Stripe). Include subtle animations (fade-in, slide-up, loading spinner states) and ensure the layout is fully responsive and integrates perfectly with my application's theme and styles. Please build everything directly in the app's existing visual design language.`;
                   
                   navigator.clipboard.writeText(text);

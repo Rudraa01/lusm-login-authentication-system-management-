@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Copy, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_URL } from '../api/axios';
 import './DashboardPages.css';
 
 const endpoints = [
@@ -119,7 +120,7 @@ function EndpointCard({ endpoint }) {
   const [expanded, setExpanded] = useState(false);
   const mc = methodColors[endpoint.method];
 
-  const curlExample = `curl -X ${endpoint.method} http://localhost:4000${endpoint.path} \\
+  const curlExample = `curl -X ${endpoint.method} ${API_URL}${endpoint.path} \\
 ${Object.entries(endpoint.headers).map(([k, v]) => `  -H "${k}: ${v}"`).join(' \\\n')}${endpoint.body ? ` \\
   -d '${JSON.stringify(endpoint.body)}'` : ''}`;
 
@@ -197,7 +198,7 @@ export default function DocsPage() {
 
       <div className="docs-intro glass-card" style={{ padding: 24, marginBottom: 24 }}>
         <h3 style={{ color: 'var(--text-white)', marginBottom: 8 }}>Base URL</h3>
-        <code style={{ color: 'var(--accent-cyan)', fontSize: 15 }}>http://localhost:4000</code>
+        <code style={{ color: 'var(--accent-cyan)', fontSize: 15 }}>{API_URL}</code>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 12 }}>
           All public API endpoints require the <code style={{ color: 'var(--accent-primary)' }}>x-api-key</code> header
           with your project's API key. Get your key from the{' '}

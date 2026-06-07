@@ -179,7 +179,7 @@ export default function ProjectsPage() {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="http://localhost:3000, https://myapp.com"
+                    placeholder="https://local.dev:3000, https://myapp.com"
                     value={newProject.allowedOrigins}
                     onChange={(e) => setNewProject({ ...newProject, allowedOrigins: e.target.value })}
                   />
