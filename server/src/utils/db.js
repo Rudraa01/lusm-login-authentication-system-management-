@@ -4,10 +4,17 @@ const path = require('path');
 // Ensure environment variables are loaded in case this file is required before index.js finishes setup
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const connectionString = process.env.DATABASE_URL;
+let connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   console.error('DATABASE_URL is not defined in the environment variables!');
+} else {
+  // Force IPv4 loopback (127.0.0.1) instead of localhost. Node.js 18+ resolves
+  // localhost to IPv6 ::1 by default, which causes "Access denied ... @ '::1'"
+  // on Hostinger shared servers where MySQL only listens/authorizes on IPv4 loopback.
+  connectionString = connectionString
+    .replace('//localhost', '//127.0.0.1')
+    .replace('@localhost', '@127.0.0.1');
 }
 
 const pool = mysql.createPool({
