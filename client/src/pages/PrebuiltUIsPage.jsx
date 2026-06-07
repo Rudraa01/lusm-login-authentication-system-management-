@@ -181,7 +181,7 @@ ${ui.htmlCode || ''}
   };
 
   return (
-    <div className="dashboard-page" style={{ height: 'calc(100vh - 80px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="dashboard-page animate-fade-in" style={{ height: 'calc(100vh - 80px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="dashboard-page-header" style={{ marginBottom: '16px', flexShrink: 0 }}>
         <div>
           <h1 className="page-title">Pre-built UIs</h1>
@@ -200,120 +200,80 @@ ${ui.htmlCode || ''}
           <p style={{ color: 'var(--text-secondary)' }}>Check back later for pre-built components.</p>
         </div>
       ) : (
-        <div className="ui-library-container" style={{ display: 'flex', gap: '24px', flex: 1, minHeight: 0 }}>
+        <div className="ui-library-container">
           
           {/* Left Sidebar - List of UIs */}
-          <div className="ui-list-sidebar card" style={{ width: '300px', flexShrink: 0, overflowY: 'auto', padding: '16px' }}>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.05em' }}>
-              Components
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {uis.map(ui => (
-                <div 
-                  key={ui.id}
-                  onClick={() => setSelectedUi(ui)}
-                  style={{ 
-                    padding: '12px 16px', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    background: selectedUi?.id === ui.id ? 'var(--bg-glass-hover)' : 'transparent',
-                    border: `1px solid ${selectedUi?.id === ui.id ? 'var(--border-subtle)' : 'transparent'}`,
-                    transition: 'all 0.2s ease',
-                  }}
-                  className="ui-list-item hover-bg-glass"
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-                    <LayoutTemplate size={16} style={{ color: selectedUi?.id === ui.id ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
-                    <span style={{ fontWeight: 600, color: selectedUi?.id === ui.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                      {ui.title}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span className="badge badge-info" style={{ fontSize: '10px', padding: '2px 6px' }}>{ui.type}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="ui-list-sidebar">
+            {uis.map((ui, idx) => (
+              <div 
+                key={ui.id}
+                onClick={() => setSelectedUi(ui)}
+                className={`ui-list-item-designed ${selectedUi?.id === ui.id ? 'active' : ''}`}
+              >
+                <span className="ui-list-item-designed-num">
+                  {idx + 1}.
+                </span>
+                <span className="ui-list-item-designed-title">
+                  {ui.title}
+                </span>
+              </div>
+            ))}
           </div>
 
+          {/* Vertical Divider */}
+          <div className="ui-divider" />
+
           {/* Right Area - Live Preview */}
-          <div className="ui-preview-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div className="ui-preview-area">
             {selectedUi ? (
-              <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 
                 {/* Preview Toolbar */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between', 
-                  padding: '16px 24px',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  background: 'rgba(0,0,0,0.2)'
-                }}>
+                <div className="ui-preview-toolbar">
                   <div>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h2 className="ui-preview-title">
                       {selectedUi.title}
                     </h2>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    <p className="ui-preview-subtitle">
                       {selectedUi.description || 'Interactive live preview'}
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    {/* Viewport Toggle */}
-                    <div style={{ display: 'flex', background: 'var(--bg-glass)', borderRadius: '8px', padding: '4px' }}>
-                      <button 
-                        className={`btn btn-sm btn-icon ${previewMode === 'desktop' ? 'btn-secondary' : 'btn-ghost'}`}
-                        onClick={() => setPreviewMode('desktop')}
-                        title="Desktop View"
-                      >
-                        <MonitorPlay size={16} />
-                      </button>
-                      <button 
-                        className={`btn btn-sm btn-icon ${previewMode === 'mobile' ? 'btn-secondary' : 'btn-ghost'}`}
-                        onClick={() => setPreviewMode('mobile')}
-                        title="Mobile View"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                      </button>
-                    </div>
-
+                  {/* Center: Device Toggle Capsule */}
+                  <div className="ui-device-toggle-capsule">
                     <button 
-                      className="btn btn-primary"
-                      onClick={() => handleDownload(selectedUi)}
-                      disabled={downloading}
+                      className={`ui-device-toggle-btn ${previewMode === 'desktop' ? 'active' : ''}`}
+                      onClick={() => setPreviewMode('desktop')}
                     >
-                      {downloading ? (
-                        <span className="spinner"></span>
-                      ) : (
-                        <Download size={16} />
-                      )}
-                      {downloading ? 'Zipping...' : 'Download ZIP'}
+                      pc
+                    </button>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.15)', margin: '0 4px', userSelect: 'none' }}>|</span>
+                    <button 
+                      className={`ui-device-toggle-btn ${previewMode === 'mobile' ? 'active' : ''}`}
+                      onClick={() => setPreviewMode('mobile')}
+                    >
+                      mobile
                     </button>
                   </div>
+
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => handleDownload(selectedUi)}
+                    disabled={downloading}
+                    style={{ padding: '8px 16px', borderRadius: '8px' }}
+                  >
+                    {downloading ? (
+                      <span className="spinner" style={{ width: '14px', height: '14px', marginRight: '6px' }}></span>
+                    ) : (
+                      <Download size={14} style={{ marginRight: '6px' }} />
+                    )}
+                    {downloading ? 'Downloading...' : 'Download ZIP'}
+                  </button>
                 </div>
 
-                {/* Iframe Container */}
-                <div style={{ 
-                  flex: 1, 
-                  background: 'repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 50% / 20px 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '24px',
-                  overflow: 'auto'
-                }}>
-                  <div style={{
-                    width: previewMode === 'desktop' ? '100%' : '375px',
-                    height: previewMode === 'desktop' ? '100%' : '667px',
-                    transition: 'all 0.3s ease',
-                    borderRadius: previewMode === 'mobile' ? '32px' : '8px',
-                    border: previewMode === 'mobile' ? '8px solid #1e293b' : '1px solid var(--border-color)',
-                    overflow: 'hidden',
-                    background: '#0f172a',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                  }}>
+                {/* Iframe Frame Box */}
+                <div className="ui-device-frame-wrapper">
+                  <div className={`ui-device-frame ${previewMode === 'desktop' ? 'ui-device-frame-desktop' : 'ui-device-frame-mobile'}`}>
                     <iframe
                       ref={iframeRef}
                       title="UI Preview"
@@ -324,27 +284,27 @@ ${ui.htmlCode || ''}
                   </div>
                 </div>
                 
-                {/* Code snippets summary */}
-                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '24px' }}>
+                {/* Indicators Footer */}
+                <div className="ui-indicators-footer">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                    <CheckCircle size={14} style={{ color: 'var(--success-color)' }} />
+                    <CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} />
                     HTML included
                   </div>
                   {selectedUi.cssCode && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                      <CheckCircle size={14} style={{ color: 'var(--success-color)' }} />
+                      <CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} />
                       CSS included
                     </div>
                   )}
                   {selectedUi.jsCode && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                      <CheckCircle size={14} style={{ color: 'var(--success-color)' }} />
+                      <CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} />
                       Vanilla JS included
                     </div>
                   )}
                   {selectedUi.reactCode && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                      <CheckCircle size={14} style={{ color: 'var(--success-color)' }} />
+                      <CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} />
                       React Component included
                     </div>
                   )}

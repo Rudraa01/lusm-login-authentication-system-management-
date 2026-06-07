@@ -660,3 +660,218 @@
   gap: 12px;
 }
 
+/* ─── Pre-built UIs Page Redesign ────────────────────────── */
+.ui-library-container {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 8px;
+}
+
+.ui-list-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-list-item-designed {
+  padding: 16px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.ui-list-item-designed:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ui-list-item-designed.active {
+  border-bottom-color: rgba(163, 149, 129, 0.3);
+}
+
+.ui-list-item-designed-num {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-family: 'Geist Mono', monospace;
+  min-width: 24px;
+  display: inline-block;
+}
+
+.ui-list-item-designed-title {
+  font-size: 15px;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.ui-list-item-designed:hover .ui-list-item-designed-title {
+  color: var(--text-primary);
+}
+
+.ui-list-item-designed.active .ui-list-item-designed-title {
+  color: var(--text-white);
+  font-weight: 600;
+}
+
+.ui-list-item-designed.active .ui-list-item-designed-num {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.ui-preview-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.ui-preview-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-white);
+  margin: 0;
+}
+
+.ui-preview-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin: 0;
+}
+
+.ui-device-toggle-capsule {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+}
+
+.ui-device-toggle-btn {
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ui-device-toggle-btn.active {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.ui-device-toggle-btn:not(.active) {
+  color: var(--text-secondary);
+}
+
+.ui-device-toggle-btn:not(.active):hover {
+  color: var(--text-white);
+}
+
+.ui-device-frame-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  position: relative;
+}
+
+.ui-device-frame {
+  max-width: 100%;
+  max-height: 100%;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 24px;
+  border: 5px solid #ffffff;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.ui-device-frame-desktop {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-device-frame-mobile {
+  width: 375px;
+  height: 667px;
+}
+
+.ui-indicators-footer {
+  padding: 16px 0 0 0;
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .ui-library-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .ui-list-sidebar {
+    width: 100%;
+    max-height: 200px;
+    padding-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+  }
+
+  .ui-preview-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 16px;
+  }
+
+  .ui-preview-toolbar .ui-device-toggle-capsule {
+    align-self: center;
+  }
+
+  .ui-preview-toolbar .btn {
+    width: 100%;
+  }
+
+  .ui-device-frame-wrapper {
+    padding: 12px;
+    height: 480px;
+  }
+
+  .ui-divider {
+    display: none !important;
+  }
+}
+
+.ui-divider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  align-self: stretch;
+  margin: 0 16px;
+}
+
