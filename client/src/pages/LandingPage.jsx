@@ -262,7 +262,10 @@ export default function LandingPage() {
             <a href="#code">Integration</a>
           </div>
           <div className="footer-bottom">
-            <p>© {new Date().getFullYear()} AuthEasy. Made with ❤️ for frontend developers.</p>
+            <p>© {new Date().getFullYear()} AuthEasy. All rights reserved.</p>
+            <div className="developer-credit">
+              Developed by <a href="https://rudranshinc.dev" target="_blank" rel="noopener noreferrer">Rudransh Inc.</a>
+            </div>
           </div>
         </div>
       </footer>

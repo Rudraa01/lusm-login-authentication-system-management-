@@ -508,11 +508,33 @@
 .footer-bottom {
   padding-top: 24px;
   border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .footer-bottom p {
   color: var(--text-muted);
   font-size: 13px;
+  margin: 0;
+}
+
+.developer-credit {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.developer-credit a {
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: color var(--transition-fast);
+}
+
+.developer-credit a:hover {
+  color: var(--text-white);
+  text-decoration: underline;
 }
 
 /* ─── Section Background Effects ────────────────────────── */
@@ -725,5 +747,11 @@
 
   .steps-grid {
     flex-direction: column;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
   }
 }
