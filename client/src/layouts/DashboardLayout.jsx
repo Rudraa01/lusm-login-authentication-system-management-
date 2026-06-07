@@ -25,6 +25,16 @@ export default function DashboardLayout() {
 
   return (
     <div className="dashboard-layout">
+      {/* Mobile Header */}
+      <header className="mobile-header">
+        <div className="mobile-header-logo">
+          <img src="/logo.png" alt="AuthEasy Logo" className="logo-img" />
+        </div>
+        <button className="mobile-logout-btn" onClick={handleLogout} title="Logout">
+          <LogOut size={20} />
+        </button>
+      </header>
+
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
@@ -73,6 +83,23 @@ export default function DashboardLayout() {
       <main className="dashboard-main">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="mobile-nav">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) =>
+              `mobile-nav-link ${isActive ? 'active' : ''}`
+            }
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

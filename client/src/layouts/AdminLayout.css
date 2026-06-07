@@ -168,14 +168,114 @@
                     radial-gradient(ellipse at bottom right, rgba(244, 63, 94, 0.08) 0%, transparent 50%);
 }
 
+/* ─── Mobile Header ───────────────────────────────────── */
+.admin-mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.admin-mobile-header-logo {
+  display: flex;
+  align-items: center;
+}
+
+.admin-mobile-header-logo .logo-img {
+  height: 32px;
+  width: auto;
+}
+
+.admin-mobile-logout-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.admin-mobile-logout-btn:hover {
+  color: var(--admin-accent);
+}
+
+/* ─── Mobile Bottom Navigation ─────────────────────────── */
+.admin-mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(10, 10, 12, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.admin-mobile-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  text-decoration: none;
+  flex: 1;
+  height: 100%;
+  transition: all var(--transition-fast);
+}
+
+.admin-mobile-nav-link svg {
+  color: var(--text-secondary);
+  transition: transform var(--transition-fast);
+}
+
+.admin-mobile-nav-link:hover,
+.admin-mobile-nav-link.active {
+  color: var(--text-primary);
+}
+
+.admin-mobile-nav-link.active svg {
+  color: var(--admin-accent);
+  transform: translateY(-2px);
+}
+
 /* ─── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .admin-sidebar {
     display: none;
   }
 
+  .admin-mobile-header {
+    display: flex;
+  }
+
+  .admin-mobile-nav {
+    display: flex;
+  }
+
   .admin-dashboard-main {
     margin-left: 0;
-    padding: 20px;
+    padding: calc(var(--header-height) + 16px) 16px calc(64px + 16px + env(safe-area-inset-bottom));
   }
 }

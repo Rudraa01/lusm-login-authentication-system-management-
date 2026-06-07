@@ -23,6 +23,16 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-layout">
+      {/* Mobile Header */}
+      <header className="admin-mobile-header">
+        <div className="admin-mobile-header-logo">
+          <img src="/logo.png" alt="AuthEasy Logo" className="logo-img" />
+        </div>
+        <button className="admin-mobile-logout-btn" onClick={handleLogout} title="Logout">
+          <LogOut size={20} />
+        </button>
+      </header>
+
       {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
@@ -71,6 +81,23 @@ export default function AdminLayout() {
       <main className="admin-dashboard-main">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="admin-mobile-nav">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) =>
+              `admin-mobile-nav-link ${isActive ? 'active' : ''}`
+            }
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }
