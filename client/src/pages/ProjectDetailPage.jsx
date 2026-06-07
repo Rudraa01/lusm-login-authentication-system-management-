@@ -160,11 +160,11 @@ export default function ProjectDetailPage() {
     <div className="animate-fade-in">
       {/* Header */}
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <Link to="/dashboard/projects" className="btn btn-ghost btn-icon">
             <ArrowLeft size={18} />
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', overflow: 'hidden', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)' }}>
               {project.logoUrl ? (
                 <img src={project.logoUrl} alt={project.name} style={{ width: '32px', height: '32px', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
@@ -349,7 +349,7 @@ export default function ProjectDetailPage() {
 
       {/* Settings Tab */}
       {tab === 'settings' && (
-        <div className="glass-card" style={{ marginTop: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: '28px' }}>
+        <div className="glass-card settings-card" style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
           {/* Logo URL Section */}
           <div>
@@ -359,7 +359,7 @@ export default function ProjectDetailPage() {
             <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
               Specify a direct URL to your project's logo image. This logo will be displayed at the top of all transactional email notifications (like verification OTPs and password resets) sent to your end-users.
             </p>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+            <div className="settings-logo-preview" style={{ display: 'flex', gap: 16, alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
               <div style={{ width: 64, height: 64, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-subtle)', overflow: 'hidden', flexShrink: 0 }}>
                 {logoUrl ? (
                   <img src={logoUrl} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />

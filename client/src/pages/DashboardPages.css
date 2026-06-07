@@ -380,6 +380,106 @@
 
   .api-key-header {
     flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .api-key-header > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px !important;
+    width: 100%;
+  }
+
+  .api-key-value {
+    overflow-x: auto;
+  }
+
+  .api-key-value code {
+    white-space: pre;
+    font-size: 12px;
+  }
+
+  .settings-logo-preview {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .settings-logo-preview > div {
+    width: 100%;
+  }
+
+  .action-row-content {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  .action-row-content button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .action-row-content span {
+    margin-bottom: 4px;
+    text-align: center;
+    width: 100%;
+    display: block;
+    margin-right: 0 !important;
+  }
+
+  /* Optimize Page Title & Subtitle for small screens */
+  .page-title {
+    font-size: 22px !important;
+  }
+
+  .page-subtitle {
+    font-size: 13px !important;
+  }
+
+  /* Optimize Detail Tabs to fit and look balanced */
+  .detail-tabs {
+    flex-wrap: wrap;
+  }
+
+  .detail-tab {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* Optimize Settings Card and Action Button */
+  .settings-card {
+    padding: 16px !important;
+    gap: 20px !important;
+  }
+
+  .settings-card button.btn-primary {
+    width: 100%;
+  }
+
+  /* Optimize API Key Card */
+  .api-key-card {
+    padding: 16px !important;
+  }
+
+  /* Optimize Table Toolbar Search input */
+  .table-toolbar .input-with-icon {
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  /* Optimize AI Prompt Tabs */
+  .ai-prompt-tabs-container {
+    flex-direction: column;
+  }
+
+  .ai-prompt-tab-btn {
+    width: 100%;
   }
 }
 
