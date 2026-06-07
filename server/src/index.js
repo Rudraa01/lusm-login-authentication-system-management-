@@ -64,3 +64,6 @@ const publicAuthRoutes = require('./routes/public.auth.routes');
 const requestLogger = require('./middleware/requestLogger');
 
 app.use('/api/v1/auth', requestLogger, publicAuthRoutes);
+const uiRoutes = require('./routes/ui.routes');
+
+app.use('/api/v1/ui', requestLogger, uiRoutes);
