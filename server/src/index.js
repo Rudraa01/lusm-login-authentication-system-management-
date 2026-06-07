@@ -28,9 +28,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 
-app.get('/', (req, res) => {
-  res.send('AuthEasy Server Running');
-});
+
 
 app.get('/api/health', (req, res) => {
   res.json({
