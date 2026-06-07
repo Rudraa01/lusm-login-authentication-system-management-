@@ -482,6 +482,20 @@ router.get('/uis', authAdmin, async (req, res) => {
   }
 });
 
+const decodeBase64 = (str) => {
+  if (!str) return '';
+  try {
+    // If it has spaces/newlines or isn't standard base64 pattern, it's raw text
+    const trimmed = str.trim();
+    if (/^[A-Za-z0-9+/=]+$/.test(trimmed)) {
+      return Buffer.from(trimmed, 'base64').toString('utf-8');
+    }
+  } catch (err) {
+    // Fallback
+  }
+  return str;
+};
+
 /**
  * POST /api/admin/uis
  * Add a new pre-built UI
@@ -494,6 +508,11 @@ router.post('/uis', authAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title and type are required.' });
     }
 
+    const decodedHtml = decodeBase64(htmlCode);
+    const decodedCss = decodeBase64(cssCode);
+    const decodedJs = decodeBase64(jsCode);
+    const decodedReact = decodeBase64(reactCode);
+
     const uiId = uuidv4();
     const createdAt = new Date();
 
@@ -505,10 +524,10 @@ router.post('/uis', authAdmin, async (req, res) => {
         title,
         description || '',
         type,
-        htmlCode || '',
-        cssCode || '',
-        jsCode || '',
-        reactCode || '',
+        decodedHtml,
+        decodedCss,
+        decodedJs,
+        decodedReact,
         createdAt,
         createdAt,
       ]
@@ -522,10 +541,10 @@ router.post('/uis', authAdmin, async (req, res) => {
         title,
         description: description || '',
         type,
-        htmlCode: htmlCode || '',
-        cssCode: cssCode || '',
-        jsCode: jsCode || '',
-        reactCode: reactCode || '',
+        htmlCode: decodedHtml,
+        cssCode: decodedCss,
+        jsCode: decodedJs,
+        reactCode: decodedReact,
         createdAt,
         updatedAt: createdAt,
       }
@@ -555,10 +574,10 @@ router.put('/uis/:id', authAdmin, async (req, res) => {
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (type !== undefined) updateData.type = type;
-    if (htmlCode !== undefined) updateData.htmlCode = htmlCode;
-    if (cssCode !== undefined) updateData.cssCode = cssCode;
-    if (jsCode !== undefined) updateData.jsCode = jsCode;
-    if (reactCode !== undefined) updateData.reactCode = reactCode;
+    if (htmlCode !== undefined) updateData.htmlCode = decodeBase64(htmlCode);
+    if (cssCode !== undefined) updateData.cssCode = decodeBase64(cssCode);
+    if (jsCode !== undefined) updateData.jsCode = decodeBase64(jsCode);
+    if (reactCode !== undefined) updateData.reactCode = decodeBase64(reactCode);
 
     if (Object.keys(updateData).length > 0) {
       const fields = [];

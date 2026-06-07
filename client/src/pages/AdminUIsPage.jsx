@@ -72,13 +72,29 @@ export default function AdminUIsPage() {
     setEditingUi(null);
   };
 
+  const safeBtoa = (str) => {
+    try {
+      return btoa(unescape(encodeURIComponent(str || '')));
+    } catch (e) {
+      console.error('Base64 encoding failed:', e);
+      return '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        htmlCode: safeBtoa(formData.htmlCode),
+        cssCode: safeBtoa(formData.cssCode),
+        jsCode: safeBtoa(formData.jsCode),
+        reactCode: safeBtoa(formData.reactCode),
+      };
       if (editingUi) {
-        await api.put(`/api/admin/uis/${editingUi.id}`, formData);
+        await api.put(`/api/admin/uis/${editingUi.id}`, payload);
       } else {
-        await api.post('/api/admin/uis', formData);
+        await api.post('/api/admin/uis', payload);
       }
       handleCloseModal();
       fetchUis();
