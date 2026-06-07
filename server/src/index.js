@@ -1,5 +1,17 @@
 require('dotenv').config();
 
+// Run database migrations programmatically on production startup
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const { execSync } = require('child_process');
+    console.log('🔄 Running database migrations (Prisma)...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('✅ Database migrations applied successfully.');
+  } catch (err) {
+    console.error('❌ Database migrations failed:', err);
+  }
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
