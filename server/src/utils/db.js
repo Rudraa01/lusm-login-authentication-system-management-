@@ -11,6 +11,10 @@ if (!connectionString) {
   console.error('DATABASE_URL is not defined in the environment variables!');
 } else {
   try {
+    // Clean any accidental environment variable prefixing or quotes
+    connectionString = connectionString.replace(/^DATABASE_URL=/i, '').trim();
+    connectionString = connectionString.replace(/^['"]|['"]$/g, '');
+
     // Remove protocol prefix mysql://
     const withoutProtocol = connectionString.replace(/^mysql:\/\//i, '');
     
