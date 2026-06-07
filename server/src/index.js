@@ -6,7 +6,10 @@ if (process.env.NODE_ENV === 'production') {
   try {
     const { execSync } = require('child_process');
     console.log('🔄 Running database migrations (Prisma)...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    execSync('npx prisma migrate deploy', { 
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '../') // Run from server directory
+    });
     console.log('✅ Database migrations applied successfully.');
   } catch (err) {
     console.error('❌ Database migrations failed:', err);
@@ -125,12 +128,20 @@ app.get('/api/docs', (req, res) => {
   });
 });
 
-// ─── 404 Handler ────────────────────────────────────────────────
-app.use((req, res) => {
+// ─── Static Files & SPA Fallback ───────────────────────────────
+app.use(express.static(path.join(__dirname, '../public')));
+
+// ─── API 404 Handler ────────────────────────────────────────────
+app.use('/api', (req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.method} ${req.url} not found.`,
   });
+});
+
+// ─── SPA Fallback Handler ───────────────────────────────────────
+app.use('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // ─── Error Handler ──────────────────────────────────────────────
