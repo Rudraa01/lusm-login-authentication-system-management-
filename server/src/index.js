@@ -41,7 +41,15 @@ app.get('/api/health', (req, res) => {
 app.use('/api/dash', developerAuthRoutes);
 
 console.log('About to start server...');
+const publicPath = path.join(__dirname, '../public');
 
+console.log('Public Path:', publicPath);
+
+app.use(express.static(publicPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
 app.listen(PORT, () => {
   console.log(`Server successfully listening on port ${PORT}`);
 });
