@@ -1,6 +1,7 @@
 {
   "name": "lusm-server",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "LUSM Backend API Server",
   "main": "src/index.js",
   "scripts": {
