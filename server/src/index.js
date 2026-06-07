@@ -17,19 +17,28 @@ try {
 }
 
 const express = require('express');
+const requestLogger = require('./middleware/requestLogger');
 
-// TEST ROUTE IMPORT
 const developerAuthRoutes = require('./routes/developer.auth.routes');
+const projectRoutes = require('./routes/project.routes');
+const userManagementRoutes = require('./routes/user.management.routes');
+const adminRoutes = require('./routes/admin.routes');
+const publicAuthRoutes = require('./routes/public.auth.routes');
+const uiRoutes = require('./routes/ui.routes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const publicPath = path.join(__dirname, '../public');
+
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('Public Path:', publicPath);
 
+app.use(express.json());
 
-
+// Health Check
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -37,39 +46,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// TEST ONLY THIS ROUTE
+// API Routes
 app.use('/api/dash', developerAuthRoutes);
+app.use('/api/dash/projects', projectRoutes);
+app.use('/api/dash/projects', userManagementRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/v1/auth', requestLogger, publicAuthRoutes);
+app.use('/api/v1/ui', requestLogger, uiRoutes);
 
-console.log('About to start server...');
-const publicPath = path.join(__dirname, '../public');
-
-console.log('Public Path:', publicPath);
-
+// Static Frontend
 app.use(express.static(publicPath));
 
-app.get('*', (req, res) => {
+// React SPA Fallback
+app.use((req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
+
+console.log('About to start server...');
+
 app.listen(PORT, () => {
   console.log(`Server successfully listening on port ${PORT}`);
 });
 
 module.exports = app;
-const projectRoutes = require('./routes/project.routes');
-
-app.use('/api/dash/projects', projectRoutes);
-
-const userManagementRoutes = require('./routes/user.management.routes');
-
-app.use('/api/dash/projects', userManagementRoutes);
-
-const adminRoutes = require('./routes/admin.routes');
-
-app.use('/api/admin', adminRoutes);
-const publicAuthRoutes = require('./routes/public.auth.routes');
-const requestLogger = require('./middleware/requestLogger');
-
-app.use('/api/v1/auth', requestLogger, publicAuthRoutes);
-const uiRoutes = require('./routes/ui.routes');
-
-app.use('/api/v1/ui', requestLogger, uiRoutes);
