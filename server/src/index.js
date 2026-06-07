@@ -1,22 +1,8 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// Run database migrations programmatically on production startup
-if (process.env.NODE_ENV === 'production') {
-  try {
-    const { execSync } = require('child_process');
-    console.log('🔄 Running database migrations (Prisma)...');
-    // Using local node_modules path because npx might not be available in Hostinger Passenger runtime
-    execSync('node ./node_modules/prisma/build/index.js migrate deploy', { 
-      stdio: 'inherit',
-      cwd: path.join(__dirname, '../') // Run from server directory
-    });
-    console.log('✅ Database migrations applied successfully.');
-  } catch (err) {
-    // Log as standard info so it doesn't trigger Hostinger Passenger fatal crash on stderr
-    console.log('⚠️ Database migrations skipped or failed:', err.message);
-  }
-}
+// Prisma migrations should be run via CLI or separate script to avoid Passenger crashes on Hostinger
+// (Hostinger's Passenger runtime treats any stderr output as a fatal crash)
 
 const express = require('express');
 const cors = require('cors');
