@@ -52,3 +52,7 @@ module.exports = app;
 const projectRoutes = require('./routes/project.routes');
 
 app.use('/api/dash/projects', projectRoutes);
+
+const userManagementRoutes = require('./routes/user.management.routes');
+
+app.use('/api/dash/projects', userManagementRoutes);
