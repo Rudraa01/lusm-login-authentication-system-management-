@@ -17,6 +17,7 @@ try {
 }
 
 const express = require('express');
+const cors = require('cors');
 const requestLogger = require('./middleware/requestLogger');
 
 const developerAuthRoutes = require('./routes/developer.auth.routes');
@@ -35,6 +36,12 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', PORT);
 console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
 console.log('Public Path:', publicPath);
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+}));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));

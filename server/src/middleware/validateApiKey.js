@@ -6,6 +6,11 @@ const db = require('../utils/db');
  * Attaches the project to req.project.
  */
 const validateApiKey = async (req, res, next) => {
+  // Bypass validation for CORS preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   const apiKey = req.headers['x-api-key'];
 
   if (!apiKey) {
