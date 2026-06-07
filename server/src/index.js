@@ -60,3 +60,7 @@ app.use('/api/dash/projects', userManagementRoutes);
 const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/admin', adminRoutes);
+const publicAuthRoutes = require('./routes/public.auth.routes');
+const requestLogger = require('./middleware/requestLogger');
+
+app.use('/api/v1/auth', requestLogger, publicAuthRoutes);
