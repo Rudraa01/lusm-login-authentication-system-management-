@@ -6,12 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "build": "npx prisma generate",
-    "start": "npx prisma generate && npx prisma migrate deploy && node src/index.js",
-    "db:migrate": "npx prisma migrate dev",
-    "db:generate": "npx prisma generate",
-    "db:studio": "npx prisma studio",
-    "db:seed": "node prisma/seed.js"
+    "build": "echo 'No build step required'",
+    "start": "node src/index.js"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
@@ -22,6 +18,7 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.22.5",
     "nodemailer": "^8.0.10",
     "prisma": "^6.9.0",
     "uuid": "^11.1.0"

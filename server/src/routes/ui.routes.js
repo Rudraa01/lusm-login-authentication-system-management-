@@ -1,9 +1,8 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const db = require('../utils/db');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * GET /api/v1/ui
@@ -12,21 +11,11 @@ const prisma = new PrismaClient();
  */
 router.get('/', authLimiter, async (req, res) => {
   try {
-    const uis = await prisma.prebuiltUi.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        type: true,
-        htmlCode: true,
-        cssCode: true,
-        jsCode: true,
-        reactCode: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    });
+    const [uis] = await db.query(
+      `SELECT id, title, description, type, htmlCode, cssCode, jsCode, reactCode, createdAt, updatedAt 
+       FROM PrebuiltUi 
+       ORDER BY createdAt DESC`
+    );
     res.json({ success: true, data: uis });
   } catch (err) {
     console.error('List UIs error:', err);

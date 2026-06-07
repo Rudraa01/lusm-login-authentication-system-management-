@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
+const { v4: uuidv4 } = require('uuid');
+const db = require('../utils/db');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 const { validateStrongPassword } = require('../utils/passwordUtil');
 const { generateOtp, getOtpExpiry } = require('../utils/otp');
@@ -9,7 +10,6 @@ const authDeveloper = require('../middleware/authDeveloper');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * POST /api/dash/signup
@@ -31,7 +31,8 @@ router.post('/signup', authLimiter, async (req, res) => {
     }
 
     // Check if developer already exists
-    const existing = await prisma.developer.findUnique({ where: { email } });
+    const [existingRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const existing = existingRows[0];
     
     if (existing) {
       if (existing.isVerified) {
@@ -43,20 +44,16 @@ router.post('/signup', authLimiter, async (req, res) => {
       
       // Update existing unverified developer
       const passwordHash = await bcrypt.hash(password, 12);
-      await prisma.developer.update({
-        where: { id: existing.id },
-        data: { name, passwordHash }
-      });
+      await db.query(
+        'UPDATE Developer SET name = ?, passwordHash = ? WHERE id = ?',
+        [name, passwordHash, existing.id]
+      );
       
       const otpCode = generateOtp();
-      await prisma.otp.create({
-        data: {
-          code: otpCode,
-          type: 'SIGNUP',
-          expiresAt: getOtpExpiry(),
-          developerId: existing.id,
-        },
-      });
+      await db.query(
+        'INSERT INTO Otp (id, code, type, expiresAt, developerId) VALUES (?, ?, ?, ?, ?)',
+        [uuidv4(), otpCode, 'SIGNUP', getOtpExpiry(), existing.id]
+      );
 
       try {
         await sendOtpEmail(email, otpCode, 'SIGNUP', 'AuthEasy Developer Portal');
@@ -73,20 +70,19 @@ router.post('/signup', authLimiter, async (req, res) => {
 
     // Hash password and create developer
     const passwordHash = await bcrypt.hash(password, 12);
-    const developer = await prisma.developer.create({
-      data: { name, email, passwordHash },
-    });
+    const developerId = uuidv4();
+    const createdAt = new Date();
+    await db.query(
+      'INSERT INTO Developer (id, name, email, passwordHash, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+      [developerId, name, email, passwordHash, createdAt, createdAt]
+    );
 
     // Generate and save OTP
     const otpCode = generateOtp();
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        type: 'SIGNUP',
-        expiresAt: getOtpExpiry(),
-        developerId: developer.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, developerId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'SIGNUP', getOtpExpiry(), developerId]
+    );
 
     // Send OTP email
     try {
@@ -100,10 +96,10 @@ router.post('/signup', authLimiter, async (req, res) => {
       message: 'Registration successful. Please verify your email with the OTP sent.',
       data: {
         developer: {
-          id: developer.id,
-          name: developer.name,
-          email: developer.email,
-          createdAt: developer.createdAt,
+          id: developerId,
+          name,
+          email,
+          createdAt,
         }
       },
     });
@@ -128,7 +124,8 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
       });
     }
 
-    const developer = await prisma.developer.findUnique({ where: { email } });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const developer = devRows[0];
     if (!developer) {
       return res.status(404).json({
         success: false,
@@ -144,16 +141,13 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     }
 
     // Find valid OTP
-    const otpRecord = await prisma.otp.findFirst({
-      where: {
-        developerId: developer.id,
-        code: otp,
-        type: 'SIGNUP',
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [otpRows] = await db.query(
+      `SELECT * FROM Otp 
+       WHERE developerId = ? AND code = ? AND type = 'SIGNUP' AND usedAt IS NULL AND expiresAt > ? 
+       ORDER BY createdAt DESC LIMIT 1`,
+      [developer.id, otp, new Date()]
+    );
+    const otpRecord = otpRows[0];
 
     if (!otpRecord) {
       return res.status(400).json({
@@ -163,15 +157,8 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     }
 
     // Mark OTP as used and verify developer
-    await prisma.otp.update({
-      where: { id: otpRecord.id },
-      data: { usedAt: new Date() },
-    });
-
-    await prisma.developer.update({
-      where: { id: developer.id },
-      data: { isVerified: true },
-    });
+    await db.query('UPDATE Otp SET usedAt = ? WHERE id = ?', [new Date(), otpRecord.id]);
+    await db.query('UPDATE Developer SET isVerified = 1 WHERE id = ?', [developer.id]);
 
     // Generate token
     const accessToken = generateAccessToken({
@@ -214,7 +201,8 @@ router.post('/resend-otp', authLimiter, async (req, res) => {
       });
     }
 
-    const developer = await prisma.developer.findUnique({ where: { email } });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const developer = devRows[0];
     if (!developer) {
       return res.status(404).json({
         success: false,
@@ -230,14 +218,10 @@ router.post('/resend-otp', authLimiter, async (req, res) => {
     }
 
     const otpCode = generateOtp();
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        type: 'SIGNUP',
-        expiresAt: getOtpExpiry(),
-        developerId: developer.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, developerId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'SIGNUP', getOtpExpiry(), developer.id]
+    );
 
     try {
       await sendOtpEmail(email, otpCode, 'SIGNUP', 'AuthEasy Developer Portal');
@@ -270,7 +254,8 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    const developer = await prisma.developer.findUnique({ where: { email } });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const developer = devRows[0];
     if (!developer) {
       return res.status(401).json({
         success: false,
@@ -332,16 +317,11 @@ router.post('/login', authLimiter, async (req, res) => {
  */
 router.get('/me', authDeveloper, async (req, res) => {
   try {
-    const developer = await prisma.developer.findUnique({
-      where: { id: req.developer.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-        _count: { select: { projects: true } },
-      },
-    });
+    const [devRows] = await db.query(
+      'SELECT id, name, email, createdAt FROM Developer WHERE id = ? LIMIT 1',
+      [req.developer.id]
+    );
+    const developer = devRows[0];
 
     if (!developer) {
       return res.status(404).json({
@@ -350,11 +330,19 @@ router.get('/me', authDeveloper, async (req, res) => {
       });
     }
 
+    const [projectRows] = await db.query(
+      'SELECT COUNT(*) AS projectCount FROM Project WHERE developerId = ?',
+      [req.developer.id]
+    );
+
     res.json({
       success: true,
       data: {
-        ...developer,
-        projectCount: developer._count.projects,
+        id: developer.id,
+        name: developer.name,
+        email: developer.email,
+        createdAt: developer.createdAt,
+        projectCount: projectRows[0].projectCount,
       },
     });
   } catch (err) {
@@ -383,9 +371,11 @@ router.put('/me', authDeveloper, async (req, res) => {
         });
       }
 
-      const developer = await prisma.developer.findUnique({
-        where: { id: req.developer.id },
-      });
+      const [devRows] = await db.query(
+        'SELECT passwordHash FROM Developer WHERE id = ? LIMIT 1',
+        [req.developer.id]
+      );
+      const developer = devRows[0];
 
       const isMatch = await bcrypt.compare(
         currentPassword,
@@ -415,11 +405,24 @@ router.put('/me', authDeveloper, async (req, res) => {
       });
     }
 
-    const updated = await prisma.developer.update({
-      where: { id: req.developer.id },
-      data: updateData,
-      select: { id: true, name: true, email: true, createdAt: true },
-    });
+    const fields = [];
+    const values = [];
+    for (const [key, val] of Object.entries(updateData)) {
+      fields.push(`\`${key}\` = ?`);
+      values.push(val);
+    }
+    values.push(req.developer.id);
+
+    await db.query(
+      `UPDATE Developer SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    const [updatedRows] = await db.query(
+      'SELECT id, name, email, createdAt FROM Developer WHERE id = ? LIMIT 1',
+      [req.developer.id]
+    );
+    const updated = updatedRows[0];
 
     res.json({
       success: true,

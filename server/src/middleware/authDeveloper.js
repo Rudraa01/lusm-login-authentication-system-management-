@@ -1,7 +1,5 @@
 const { verifyAccessToken } = require('../utils/jwt');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const db = require('../utils/db');
 
 /**
  * Middleware to authenticate developers using JWT Bearer token.
@@ -36,10 +34,11 @@ const authDeveloper = async (req, res, next) => {
   }
 
   try {
-    const developer = await prisma.developer.findUnique({
-      where: { id: decoded.id },
-      select: { id: true, email: true, isBlocked: true },
-    });
+    const [rows] = await db.query(
+      'SELECT id, email, isBlocked FROM Developer WHERE id = ? LIMIT 1',
+      [decoded.id]
+    );
+    const developer = rows[0];
 
     if (!developer) {
       return res.status(401).json({

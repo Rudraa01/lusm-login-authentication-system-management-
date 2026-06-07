@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { PrismaClient } = require('@prisma/client');
+const db = require('../utils/db');
 const { validateApiKey, authEndUser } = require('../middleware/validateApiKey');
 const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
@@ -10,7 +10,6 @@ const { sendOtpEmail } = require('../utils/mailer');
 const { validateStrongPassword } = require('../utils/passwordUtil');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // All public auth routes require a valid API key
 router.use(validateApiKey);
@@ -38,25 +37,19 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     // Check if user already exists in this project by email
-    let existing = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let existing = emailRows[0];
 
     // Check by phone if provided
     if (!existing && phone) {
-      existing = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [phone, req.project.id]
+      );
+      existing = phoneRows[0];
     }
 
     if (existing && existing.isVerified) {
@@ -71,40 +64,37 @@ router.post('/register', authLimiter, async (req, res) => {
     let user;
     if (existing && !existing.isVerified) {
       // Update existing unverified user
-      user = await prisma.endUser.update({
-        where: { id: existing.id },
-        data: { passwordHash, name: name || '', phone: phone || existing.phone },
-      });
+      await db.query(
+        'UPDATE EndUser SET passwordHash = ?, name = ?, phone = ?, updatedAt = NOW(3) WHERE id = ?',
+        [passwordHash, name || '', phone || existing.phone, existing.id]
+      );
+      const [userRows] = await db.query('SELECT * FROM EndUser WHERE id = ? LIMIT 1', [existing.id]);
+      user = userRows[0];
     } else {
       // Create new user
-      user = await prisma.endUser.create({
-        data: {
-          email,
-          phone: phone || null,
-          passwordHash,
-          name: name || '',
-          projectId: req.project.id,
-        },
-      });
+      const userId = uuidv4();
+      const createdAt = new Date();
+      await db.query(
+        `INSERT INTO EndUser (id, email, phone, passwordHash, name, projectId, createdAt, updatedAt) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, email, phone || null, passwordHash, name || '', req.project.id, createdAt, createdAt]
+      );
+      const [userRows] = await db.query('SELECT * FROM EndUser WHERE id = ? LIMIT 1', [userId]);
+      user = userRows[0];
     }
 
     // Generate and save OTP
     const otpCode = generateOtp();
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        type: 'SIGNUP',
-        expiresAt: getOtpExpiry(),
-        endUserId: user.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, endUserId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'SIGNUP', getOtpExpiry(), user.id]
+    );
 
     // Send OTP email
     try {
       await sendOtpEmail(email, otpCode, 'SIGNUP', req.project.name, req.project.logoUrl);
     } catch (emailErr) {
       console.error('Failed to send OTP email:', emailErr);
-      // Don't fail the request, just log it. In dev, OTP is logged to console.
     }
 
     res.status(201).json({
@@ -137,25 +127,19 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
       });
     }
 
-    let user = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let user = emailRows[0];
 
     if (!user) {
       // Try by phone
-      user = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone: email,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [email, req.project.id]
+      );
+      user = phoneRows[0];
     }
 
     if (!user) {
@@ -166,16 +150,13 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     }
 
     // Find valid OTP
-    const otpRecord = await prisma.otp.findFirst({
-      where: {
-        endUserId: user.id,
-        code: otp,
-        type: 'SIGNUP',
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [otpRows] = await db.query(
+      `SELECT * FROM Otp 
+       WHERE endUserId = ? AND code = ? AND type = 'SIGNUP' AND usedAt IS NULL AND expiresAt > ? 
+       ORDER BY createdAt DESC LIMIT 1`,
+      [user.id, otp, new Date()]
+    );
+    const otpRecord = otpRows[0];
 
     if (!otpRecord) {
       return res.status(400).json({
@@ -185,15 +166,8 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     }
 
     // Mark OTP as used and verify user
-    await prisma.otp.update({
-      where: { id: otpRecord.id },
-      data: { usedAt: new Date() },
-    });
-
-    await prisma.endUser.update({
-      where: { id: user.id },
-      data: { isVerified: true },
-    });
+    await db.query('UPDATE Otp SET usedAt = ? WHERE id = ?', [new Date(), otpRecord.id]);
+    await db.query('UPDATE EndUser SET isVerified = 1 WHERE id = ?', [user.id]);
 
     // Generate tokens
     const accessToken = generateAccessToken({
@@ -204,13 +178,10 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     });
 
     const refreshTokenValue = uuidv4();
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshTokenValue,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        endUserId: user.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO RefreshToken (id, token, expiresAt, endUserId) VALUES (?, ?, ?, ?)',
+      [uuidv4(), refreshTokenValue, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), user.id]
+    );
 
     res.json({
       success: true,
@@ -247,25 +218,19 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    let user = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let user = emailRows[0];
 
     if (!user) {
       // Try by phone
-      user = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone: email,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [email, req.project.id]
+      );
+      user = phoneRows[0];
     }
 
     if (!user) {
@@ -306,13 +271,10 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
     const refreshTokenValue = uuidv4();
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshTokenValue,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        endUserId: user.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO RefreshToken (id, token, expiresAt, endUserId) VALUES (?, ?, ?, ?)',
+      [uuidv4(), refreshTokenValue, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), user.id]
+    );
 
     res.json({
       success: true,
@@ -350,25 +312,19 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
       });
     }
 
-    let user = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let user = emailRows[0];
 
     if (!user) {
       // Try by phone
-      user = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone: email,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [email, req.project.id]
+      );
+      user = phoneRows[0];
     }
 
     // Don't reveal if user exists or not
@@ -380,14 +336,10 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     }
 
     const otpCode = generateOtp();
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        type: 'RESET',
-        expiresAt: getOtpExpiry(),
-        endUserId: user.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, endUserId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'RESET', getOtpExpiry(), user.id]
+    );
 
     try {
       // Always send OTP to user.email even if phone was provided
@@ -428,25 +380,19 @@ router.post('/reset-password', authLimiter, async (req, res) => {
       });
     }
 
-    let user = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let user = emailRows[0];
 
     if (!user) {
       // Try by phone
-      user = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone: email,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [email, req.project.id]
+      );
+      user = phoneRows[0];
     }
 
     if (!user) {
@@ -457,16 +403,13 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     }
 
     // Find valid reset OTP
-    const otpRecord = await prisma.otp.findFirst({
-      where: {
-        endUserId: user.id,
-        code: otp,
-        type: 'RESET',
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [otpRows] = await db.query(
+      `SELECT * FROM Otp 
+       WHERE endUserId = ? AND code = ? AND type = 'RESET' AND usedAt IS NULL AND expiresAt > ? 
+       ORDER BY createdAt DESC LIMIT 1`,
+      [user.id, otp, new Date()]
+    );
+    const otpRecord = otpRows[0];
 
     if (!otpRecord) {
       return res.status(400).json({
@@ -476,21 +419,13 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     }
 
     // Mark OTP as used and update password
-    await prisma.otp.update({
-      where: { id: otpRecord.id },
-      data: { usedAt: new Date() },
-    });
+    await db.query('UPDATE Otp SET usedAt = ? WHERE id = ?', [new Date(), otpRecord.id]);
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
-    await prisma.endUser.update({
-      where: { id: user.id },
-      data: { passwordHash },
-    });
+    await db.query('UPDATE EndUser SET passwordHash = ? WHERE id = ?', [passwordHash, user.id]);
 
     // Invalidate all refresh tokens for this user
-    await prisma.refreshToken.deleteMany({
-      where: { endUserId: user.id },
-    });
+    await db.query('DELETE FROM RefreshToken WHERE endUserId = ?', [user.id]);
 
     res.json({
       success: true,
@@ -517,10 +452,14 @@ router.post('/refresh-token', async (req, res) => {
       });
     }
 
-    const tokenRecord = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: { endUser: true },
-    });
+    const [tokenRows] = await db.query(
+      `SELECT r.*, e.id AS userId, e.email AS userEmail, e.projectId AS userProjectId, e.isBlocked AS userIsBlocked
+       FROM RefreshToken r
+       JOIN EndUser e ON r.endUserId = e.id
+       WHERE r.token = ? LIMIT 1`,
+      [refreshToken]
+    );
+    const tokenRecord = tokenRows[0];
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
       return res.status(401).json({
@@ -529,7 +468,7 @@ router.post('/refresh-token', async (req, res) => {
       });
     }
 
-    if (tokenRecord.endUser.isBlocked) {
+    if (tokenRecord.userIsBlocked) {
       return res.status(403).json({
         success: false,
         message: 'Your account has been blocked.',
@@ -538,9 +477,9 @@ router.post('/refresh-token', async (req, res) => {
 
     // Generate new access token
     const accessToken = generateAccessToken({
-      id: tokenRecord.endUser.id,
-      email: tokenRecord.endUser.email,
-      projectId: tokenRecord.endUser.projectId,
+      id: tokenRecord.userId,
+      email: tokenRecord.userEmail,
+      projectId: tokenRecord.userProjectId,
       role: 'enduser',
     });
 
@@ -560,17 +499,11 @@ router.post('/refresh-token', async (req, res) => {
  */
 router.get('/me', authEndUser, async (req, res) => {
   try {
-    const user = await prisma.endUser.findUnique({
-      where: { id: req.endUser.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        isVerified: true,
-        createdAt: true,
-      },
-    });
+    const [userRows] = await db.query(
+      'SELECT id, email, name, avatarUrl, isVerified, createdAt FROM EndUser WHERE id = ? LIMIT 1',
+      [req.endUser.id]
+    );
+    const user = userRows[0];
 
     if (!user) {
       return res.status(404).json({
@@ -605,17 +538,24 @@ router.put('/me', authEndUser, async (req, res) => {
       });
     }
 
-    const updated = await prisma.endUser.update({
-      where: { id: req.endUser.id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        isVerified: true,
-      },
-    });
+    const fields = [];
+    const values = [];
+    for (const [key, val] of Object.entries(updateData)) {
+      fields.push(`\`${key}\` = ?`);
+      values.push(val);
+    }
+    values.push(req.endUser.id);
+
+    await db.query(
+      `UPDATE EndUser SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    const [updatedRows] = await db.query(
+      'SELECT id, email, name, avatarUrl, isVerified FROM EndUser WHERE id = ? LIMIT 1',
+      [req.endUser.id]
+    );
+    const updated = updatedRows[0];
 
     res.json({
       success: true,
@@ -643,24 +583,18 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
       });
     }
 
-    let user = await prisma.endUser.findUnique({
-      where: {
-        email_projectId: {
-          email,
-          projectId: req.project.id,
-        },
-      },
-    });
+    const [emailRows] = await db.query(
+      'SELECT * FROM EndUser WHERE email = ? AND projectId = ? LIMIT 1',
+      [email, req.project.id]
+    );
+    let user = emailRows[0];
 
     if (!user) {
-      user = await prisma.endUser.findUnique({
-        where: {
-          phone_projectId: {
-            phone: email,
-            projectId: req.project.id,
-          },
-        },
-      });
+      const [phoneRows] = await db.query(
+        'SELECT * FROM EndUser WHERE phone = ? AND projectId = ? LIMIT 1',
+        [email, req.project.id]
+      );
+      user = phoneRows[0];
     }
 
     if (!user) {
@@ -678,14 +612,10 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     }
 
     const otpCode = generateOtp();
-    await prisma.otp.create({
-      data: {
-        code: otpCode,
-        type: 'SIGNUP',
-        expiresAt: getOtpExpiry(),
-        endUserId: user.id,
-      },
-    });
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, endUserId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'SIGNUP', getOtpExpiry(), user.id]
+    );
 
     try {
       await sendOtpEmail(user.email, otpCode, 'SIGNUP', req.project.name, req.project.logoUrl);

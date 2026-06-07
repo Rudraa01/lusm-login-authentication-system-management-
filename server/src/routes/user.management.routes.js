@@ -1,13 +1,12 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const db = require('../utils/db');
 const { validateStrongPassword, generateStrongPassword } = require('../utils/passwordUtil');
 const { sendPasswordResetEmail } = require('../utils/mailer');
 const authDeveloper = require('../middleware/authDeveloper');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * GET /api/dash/projects/:id/users
@@ -19,47 +18,37 @@ router.get('/:id/users', authDeveloper, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    const [projRows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
 
-    if (!project) {
+    if (projRows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Project not found.',
       });
     }
 
-    const where = {
-      projectId: req.params.id,
-      ...(search
-        ? {
-            OR: [
-              { email: { contains: search } },
-              { name: { contains: search } },
-            ],
-          }
-        : {}),
-    };
+    let sql = 'SELECT id, email, name, avatarUrl, isVerified, isBlocked, createdAt FROM EndUser WHERE projectId = ?';
+    let countSql = 'SELECT COUNT(*) AS count FROM EndUser WHERE projectId = ?';
+    const params = [req.params.id];
+    const countParams = [req.params.id];
 
-    const [users, total] = await Promise.all([
-      prisma.endUser.findMany({
-        where,
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          avatarUrl: true,
-          isVerified: true,
-          isBlocked: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: parseInt(limit),
-      }),
-      prisma.endUser.count({ where }),
-    ]);
+    if (search) {
+      const searchLike = `%${search}%`;
+      sql += ' AND (email LIKE ? OR name LIKE ?)';
+      countSql += ' AND (email LIKE ? OR name LIKE ?)';
+      params.push(searchLike, searchLike);
+      countParams.push(searchLike, searchLike);
+    }
+
+    sql += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+    params.push(parseInt(limit), skip);
+
+    const [users] = await db.query(sql, params);
+    const [countRows] = await db.query(countSql, countParams);
+    const total = countRows[0].count;
 
     res.json({
       success: true,
@@ -88,11 +77,12 @@ router.patch('/:id/users/:userId/block', authDeveloper, async (req, res) => {
     const { isBlocked } = req.body;
 
     // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    const [projRows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
 
-    if (!project) {
+    if (projRows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Project not found.',
@@ -100,9 +90,11 @@ router.patch('/:id/users/:userId/block', authDeveloper, async (req, res) => {
     }
 
     // Find the user in this project
-    const user = await prisma.endUser.findFirst({
-      where: { id: req.params.userId, projectId: req.params.id },
-    });
+    const [userRows] = await db.query(
+      'SELECT * FROM EndUser WHERE id = ? AND projectId = ? LIMIT 1',
+      [req.params.userId, req.params.id]
+    );
+    const user = userRows[0];
 
     if (!user) {
       return res.status(404).json({
@@ -111,11 +103,18 @@ router.patch('/:id/users/:userId/block', authDeveloper, async (req, res) => {
       });
     }
 
-    const updated = await prisma.endUser.update({
-      where: { id: req.params.userId },
-      data: { isBlocked: isBlocked !== undefined ? isBlocked : !user.isBlocked },
-      select: { id: true, email: true, isBlocked: true },
-    });
+    const nextBlocked = isBlocked !== undefined ? isBlocked : !user.isBlocked;
+
+    await db.query(
+      'UPDATE EndUser SET isBlocked = ? WHERE id = ?',
+      [nextBlocked, req.params.userId]
+    );
+
+    const [updatedRows] = await db.query(
+      'SELECT id, email, isBlocked FROM EndUser WHERE id = ? LIMIT 1',
+      [req.params.userId]
+    );
+    const updated = updatedRows[0];
 
     res.json({
       success: true,
@@ -137,20 +136,23 @@ router.patch('/:id/users/:userId/block', authDeveloper, async (req, res) => {
 router.delete('/:id/users/:userId', authDeveloper, async (req, res) => {
   try {
     // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    const [projRows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
 
-    if (!project) {
+    if (projRows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Project not found.',
       });
     }
 
-    const user = await prisma.endUser.findFirst({
-      where: { id: req.params.userId, projectId: req.params.id },
-    });
+    const [userRows] = await db.query(
+      'SELECT id FROM EndUser WHERE id = ? AND projectId = ? LIMIT 1',
+      [req.params.userId, req.params.id]
+    );
+    const user = userRows[0];
 
     if (!user) {
       return res.status(404).json({
@@ -159,13 +161,14 @@ router.delete('/:id/users/:userId', authDeveloper, async (req, res) => {
       });
     }
 
-    await prisma.endUser.delete({ where: { id: req.params.userId } });
+    await db.query('DELETE FROM EndUser WHERE id = ?', [req.params.userId]);
 
     res.json({
       success: true,
       message: 'User deleted successfully.',
     });
   } catch (err) {
+    console.error('Delete user error:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 });
@@ -192,9 +195,11 @@ router.put('/:id/users/:userId/reset-password', authDeveloper, async (req, res) 
     }
 
     // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    const [projRows] = await db.query(
+      'SELECT id, name, logoUrl FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
+    const project = projRows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -203,9 +208,11 @@ router.put('/:id/users/:userId/reset-password', authDeveloper, async (req, res) 
       });
     }
 
-    const user = await prisma.endUser.findFirst({
-      where: { id: req.params.userId, projectId: req.params.id },
-    });
+    const [userRows] = await db.query(
+      'SELECT id, email FROM EndUser WHERE id = ? AND projectId = ? LIMIT 1',
+      [req.params.userId, req.params.id]
+    );
+    const user = userRows[0];
 
     if (!user) {
       return res.status(404).json({
@@ -216,17 +223,16 @@ router.put('/:id/users/:userId/reset-password', authDeveloper, async (req, res) 
 
     const passwordHash = await bcrypt.hash(finalPassword, 12);
 
-    await prisma.endUser.update({
-      where: { id: req.params.userId },
-      data: { passwordHash },
-    });
+    await db.query(
+      'UPDATE EndUser SET passwordHash = ? WHERE id = ?',
+      [passwordHash, req.params.userId]
+    );
 
     if (generateAndEmail) {
       try {
         await sendPasswordResetEmail(user.email, finalPassword, project.name, project.logoUrl);
       } catch (err) {
         console.error('Failed to send reset email:', err);
-        // Continue anyway
       }
     }
 

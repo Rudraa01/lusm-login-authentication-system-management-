@@ -1,7 +1,8 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
+const db = require('../utils/db');
 const { validateStrongPassword, generateStrongPassword } = require('../utils/passwordUtil');
 const { generateAccessToken } = require('../utils/jwt');
 const { sendPasswordResetEmail } = require('../utils/mailer');
@@ -9,7 +10,6 @@ const authAdmin = require('../middleware/authAdmin');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * POST /api/admin/login
@@ -80,31 +80,23 @@ router.get('/me', authAdmin, async (req, res) => {
  */
 router.get('/stats', authAdmin, async (req, res) => {
   try {
-    const totalDevelopers = await prisma.developer.count();
-    const totalProjects = await prisma.project.count();
-    const totalEndUsers = await prisma.endUser.count();
+    const [devCountRows] = await db.query('SELECT COUNT(*) AS count FROM Developer');
+    const [projectCountRows] = await db.query('SELECT COUNT(*) AS count FROM Project');
+    const [userCountRows] = await db.query('SELECT COUNT(*) AS count FROM EndUser');
+
+    const totalDevelopers = devCountRows[0].count;
+    const totalProjects = projectCountRows[0].count;
+    const totalEndUsers = userCountRows[0].count;
 
     // Get projects with user count
-    const projectsWithUserCount = await prisma.project.findMany({
-      select: {
-        id: true,
-        name: true,
-        _count: { select: { endUsers: true } },
-      },
-    });
+    const [projectsWithUserCount] = await db.query(
+      `SELECT id, name, (SELECT COUNT(*) FROM EndUser e WHERE e.projectId = p.id) AS userCount FROM Project p`
+    );
 
     // Recent 5 developers signed up
-    const recentDevelopers = await prisma.developer.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isBlocked: true,
-        createdAt: true,
-      },
-    });
+    const [recentDevelopers] = await db.query(
+      'SELECT id, name, email, isBlocked, createdAt FROM Developer ORDER BY createdAt DESC LIMIT 5'
+    );
 
     res.json({
       success: true,
@@ -114,7 +106,7 @@ router.get('/stats', authAdmin, async (req, res) => {
         totalEndUsers,
         recentDevelopers,
         projectsWithUserCount: projectsWithUserCount
-          .map(p => ({ id: p.id, name: p.name, userCount: p._count.endUsers }))
+          .map(p => ({ id: p.id, name: p.name, userCount: p.userCount }))
           .sort((a, b) => b.userCount - a.userCount)
           .slice(0, 5),
       },
@@ -136,32 +128,29 @@ router.get('/developers', authAdmin, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const where = {};
+    let sql = `
+      SELECT id, name, email, isBlocked, createdAt,
+             (SELECT COUNT(*) FROM Project p WHERE p.developerId = d.id) AS projectCount
+      FROM Developer d
+    `;
+    let countSql = 'SELECT COUNT(*) AS count FROM Developer d';
+    const params = [];
+    const countParams = [];
+
     if (search) {
-      where.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
-      ];
+      const searchLike = `%${search}%`;
+      sql += ' WHERE d.name LIKE ? OR d.email LIKE ?';
+      countSql += ' WHERE d.name LIKE ? OR d.email LIKE ?';
+      params.push(searchLike, searchLike);
+      countParams.push(searchLike, searchLike);
     }
 
-    const total = await prisma.developer.count({ where });
+    sql += ' ORDER BY d.createdAt DESC LIMIT ? OFFSET ?';
+    params.push(limit, skip);
 
-    const developers = await prisma.developer.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isBlocked: true,
-        createdAt: true,
-        _count: {
-          select: { projects: true },
-        },
-      },
-    });
+    const [developers] = await db.query(sql, params);
+    const [countRows] = await db.query(countSql, countParams);
+    const total = countRows[0].count;
 
     res.json({
       success: true,
@@ -172,7 +161,7 @@ router.get('/developers', authAdmin, async (req, res) => {
           email: d.email,
           isBlocked: d.isBlocked,
           createdAt: d.createdAt,
-          projectCount: d._count.projects,
+          projectCount: d.projectCount,
         })),
         pagination: {
           total,
@@ -196,24 +185,8 @@ router.get('/developers/:id', authAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const developer = await prisma.developer.findUnique({
-      where: { id },
-      include: {
-        projects: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            apiKey: true,
-            allowedOrigins: true,
-            createdAt: true,
-            _count: {
-              select: { endUsers: true },
-            },
-          },
-        },
-      },
-    });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE id = ? LIMIT 1', [id]);
+    const developer = devRows[0];
 
     if (!developer) {
       return res.status(404).json({
@@ -221,6 +194,13 @@ router.get('/developers/:id', authAdmin, async (req, res) => {
         message: 'Developer not found.',
       });
     }
+
+    const [projects] = await db.query(
+      `SELECT p.*, (SELECT COUNT(*) FROM EndUser e WHERE e.projectId = p.id) AS userCount
+       FROM Project p
+       WHERE p.developerId = ?`,
+      [id]
+    );
 
     res.json({
       success: true,
@@ -233,14 +213,14 @@ router.get('/developers/:id', authAdmin, async (req, res) => {
           createdAt: developer.createdAt,
           updatedAt: developer.updatedAt,
         },
-        projects: developer.projects.map(p => ({
+        projects: projects.map(p => ({
           id: p.id,
           name: p.name,
           description: p.description,
           apiKey: p.apiKey,
           allowedOrigins: p.allowedOrigins,
           createdAt: p.createdAt,
-          userCount: p._count.endUsers,
+          userCount: p.userCount,
         })),
       },
     });
@@ -266,7 +246,8 @@ router.put('/developers/:id/block', authAdmin, async (req, res) => {
       });
     }
 
-    const developer = await prisma.developer.findUnique({ where: { id } });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE id = ? LIMIT 1', [id]);
+    const developer = devRows[0];
     if (!developer) {
       return res.status(404).json({
         success: false,
@@ -274,11 +255,13 @@ router.put('/developers/:id/block', authAdmin, async (req, res) => {
       });
     }
 
-    const updated = await prisma.developer.update({
-      where: { id },
-      data: { isBlocked },
-      select: { id: true, name: true, email: true, isBlocked: true },
-    });
+    await db.query('UPDATE Developer SET isBlocked = ? WHERE id = ?', [isBlocked, id]);
+
+    const [updatedRows] = await db.query(
+      'SELECT id, name, email, isBlocked FROM Developer WHERE id = ? LIMIT 1',
+      [id]
+    );
+    const updated = updatedRows[0];
 
     res.json({
       success: true,
@@ -299,7 +282,8 @@ router.delete('/developers/:id', authAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const developer = await prisma.developer.findUnique({ where: { id } });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE id = ? LIMIT 1', [id]);
+    const developer = devRows[0];
     if (!developer) {
       return res.status(404).json({
         success: false,
@@ -307,7 +291,7 @@ router.delete('/developers/:id', authAdmin, async (req, res) => {
       });
     }
 
-    await prisma.developer.delete({ where: { id } });
+    await db.query('DELETE FROM Developer WHERE id = ?', [id]);
 
     res.json({
       success: true,
@@ -325,18 +309,23 @@ router.delete('/developers/:id', authAdmin, async (req, res) => {
  */
 router.get('/analytics', authAdmin, async (req, res) => {
   try {
-    const totalDevelopers = await prisma.developer.count();
-    const totalProjects = await prisma.project.count();
-    const totalEndUsers = await prisma.endUser.count();
-    const totalRequests = await prisma.apiRequestLog.count();
+    const [devCountRows] = await db.query('SELECT COUNT(*) AS count FROM Developer');
+    const [projectCountRows] = await db.query('SELECT COUNT(*) AS count FROM Project');
+    const [userCountRows] = await db.query('SELECT COUNT(*) AS count FROM EndUser');
+    const [reqCountRows] = await db.query('SELECT COUNT(*) AS count FROM ApiRequestLog');
+
+    const totalDevelopers = devCountRows[0].count;
+    const totalProjects = projectCountRows[0].count;
+    const totalEndUsers = userCountRows[0].count;
+    const totalRequests = reqCountRows[0].count;
 
     // Requests in the last 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const requests24h = await prisma.apiRequestLog.count({
-      where: {
-        createdAt: { gte: oneDayAgo },
-      },
-    });
+    const [req24Rows] = await db.query(
+      'SELECT COUNT(*) AS count FROM ApiRequestLog WHERE createdAt >= ?',
+      [oneDayAgo]
+    );
+    const requests24h = req24Rows[0].count;
 
     // Request counts for the past 7 days (trend line)
     const dailyRequests = [];
@@ -349,40 +338,24 @@ router.get('/analytics', authAdmin, async (req, res) => {
       endOfDay.setHours(23, 59, 59, 999);
       endOfDay.setDate(endOfDay.getDate() - i);
 
-      const count = await prisma.apiRequestLog.count({
-        where: {
-          createdAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
+      const [countRows] = await db.query(
+        'SELECT COUNT(*) AS count FROM ApiRequestLog WHERE createdAt >= ? AND createdAt <= ?',
+        [startOfDay, endOfDay]
+      );
 
       const label = startOfDay.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
-      dailyRequests.push({ label, count });
+      dailyRequests.push({ label, count: countRows[0].count });
     }
 
     // Endpoint distribution
-    // Group logs by endpoint
-    const rawEndpoints = await prisma.apiRequestLog.groupBy({
-      by: ['endpoint'],
-      _count: {
-        _all: true,
-      },
-    });
-
-    const endpointDistribution = rawEndpoints.map(e => ({
-      endpoint: e.endpoint,
-      count: e._count._all,
-    })).sort((a, b) => b.count - a.count);
+    const [endpointDistribution] = await db.query(
+      'SELECT endpoint, COUNT(*) AS count FROM ApiRequestLog GROUP BY endpoint ORDER BY count DESC'
+    );
 
     // Status code distribution
-    const rawStatuses = await prisma.apiRequestLog.groupBy({
-      by: ['statusCode'],
-      _count: {
-        _all: true,
-      },
-    });
+    const [rawStatuses] = await db.query(
+      'SELECT statusCode, COUNT(*) AS count FROM ApiRequestLog GROUP BY statusCode'
+    );
 
     const statusDistribution = {
       success: 0, // 2xx
@@ -392,7 +365,7 @@ router.get('/analytics', authAdmin, async (req, res) => {
 
     rawStatuses.forEach(s => {
       const code = s.statusCode;
-      const count = s._count._all;
+      const count = s.count;
       if (code >= 200 && code < 300) {
         statusDistribution.success += count;
       } else if (code >= 400 && code < 500) {
@@ -402,44 +375,20 @@ router.get('/analytics', authAdmin, async (req, res) => {
       }
     });
 
-    // Developer leaderboard: List developers with project count, user count, request count
-    const developersList = await prisma.developer.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-        isBlocked: true,
-        projects: {
-          select: {
-            id: true,
-            _count: {
-              select: {
-                endUsers: true,
-                requestLogs: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const leaderboard = developersList.map(dev => {
-      const projectCount = dev.projects.length;
-      const userCount = dev.projects.reduce((sum, p) => sum + p._count.endUsers, 0);
-      const requestCount = dev.projects.reduce((sum, p) => sum + p._count.requestLogs, 0);
-
-      return {
-        id: dev.id,
-        name: dev.name,
-        email: dev.email,
-        createdAt: dev.createdAt,
-        isBlocked: dev.isBlocked,
-        projectCount,
-        userCount,
-        requestCount,
-      };
-    }).sort((a, b) => b.userCount - a.userCount); // sort by user count
+    // Developer leaderboard
+    const [leaderboard] = await db.query(
+      `SELECT 
+        d.id, 
+        d.name, 
+        d.email, 
+        d.createdAt, 
+        d.isBlocked,
+        (SELECT COUNT(*) FROM Project p WHERE p.developerId = d.id) AS projectCount,
+        (SELECT COUNT(*) FROM EndUser e JOIN Project p ON e.projectId = p.id WHERE p.developerId = d.id) AS userCount,
+        (SELECT COUNT(*) FROM ApiRequestLog r JOIN Project p ON r.projectId = p.id WHERE p.developerId = d.id) AS requestCount
+      FROM Developer d
+      ORDER BY userCount DESC`
+    );
 
     res.json({
       success: true,
@@ -485,9 +434,8 @@ router.put('/developers/:id/reset-password', authAdmin, async (req, res) => {
       }
     }
 
-    const developer = await prisma.developer.findUnique({
-      where: { id: req.params.id },
-    });
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE id = ? LIMIT 1', [req.params.id]);
+    const developer = devRows[0];
 
     if (!developer) {
       return res.status(404).json({
@@ -498,17 +446,13 @@ router.put('/developers/:id/reset-password', authAdmin, async (req, res) => {
 
     const passwordHash = await bcrypt.hash(finalPassword, 12);
 
-    await prisma.developer.update({
-      where: { id: req.params.id },
-      data: { passwordHash },
-    });
+    await db.query('UPDATE Developer SET passwordHash = ? WHERE id = ?', [passwordHash, req.params.id]);
 
     if (generateAndEmail) {
       try {
         await sendPasswordResetEmail(developer.email, finalPassword, 'AuthEasy Dashboard');
       } catch (err) {
         console.error('Failed to send reset email:', err);
-        // Continue anyway, but maybe inform the client
       }
     }
 
@@ -530,9 +474,7 @@ router.put('/developers/:id/reset-password', authAdmin, async (req, res) => {
  */
 router.get('/uis', authAdmin, async (req, res) => {
   try {
-    const uis = await prisma.prebuiltUi.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const [uis] = await db.query('SELECT * FROM PrebuiltUi ORDER BY createdAt DESC');
     res.json({ success: true, data: uis });
   } catch (err) {
     console.error('List UIs error:', err);
@@ -552,8 +494,31 @@ router.post('/uis', authAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title and type are required.' });
     }
 
-    const ui = await prisma.prebuiltUi.create({
+    const uiId = uuidv4();
+    const createdAt = new Date();
+
+    await db.query(
+      `INSERT INTO PrebuiltUi (id, title, description, type, htmlCode, cssCode, jsCode, reactCode, createdAt, updatedAt) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uiId,
+        title,
+        description || '',
+        type,
+        htmlCode || '',
+        cssCode || '',
+        jsCode || '',
+        reactCode || '',
+        createdAt,
+        createdAt,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Pre-built UI added successfully.',
       data: {
+        id: uiId,
         title,
         description: description || '',
         type,
@@ -561,10 +526,10 @@ router.post('/uis', authAdmin, async (req, res) => {
         cssCode: cssCode || '',
         jsCode: jsCode || '',
         reactCode: reactCode || '',
-      },
+        createdAt,
+        updatedAt: createdAt,
+      }
     });
-
-    res.status(201).json({ success: true, message: 'Pre-built UI added successfully.', data: ui });
   } catch (err) {
     console.error('Create UI error:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });
@@ -580,23 +545,38 @@ router.put('/uis/:id', authAdmin, async (req, res) => {
     const { id } = req.params;
     const { title, description, type, htmlCode, cssCode, jsCode, reactCode } = req.body;
 
-    const ui = await prisma.prebuiltUi.findUnique({ where: { id } });
+    const [uiRows] = await db.query('SELECT * FROM PrebuiltUi WHERE id = ? LIMIT 1', [id]);
+    const ui = uiRows[0];
     if (!ui) {
       return res.status(404).json({ success: false, message: 'UI not found.' });
     }
 
-    const updated = await prisma.prebuiltUi.update({
-      where: { id },
-      data: {
-        title: title !== undefined ? title : ui.title,
-        description: description !== undefined ? description : ui.description,
-        type: type !== undefined ? type : ui.type,
-        htmlCode: htmlCode !== undefined ? htmlCode : ui.htmlCode,
-        cssCode: cssCode !== undefined ? cssCode : ui.cssCode,
-        jsCode: jsCode !== undefined ? jsCode : ui.jsCode,
-        reactCode: reactCode !== undefined ? reactCode : ui.reactCode,
-      },
-    });
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (type !== undefined) updateData.type = type;
+    if (htmlCode !== undefined) updateData.htmlCode = htmlCode;
+    if (cssCode !== undefined) updateData.cssCode = cssCode;
+    if (jsCode !== undefined) updateData.jsCode = jsCode;
+    if (reactCode !== undefined) updateData.reactCode = reactCode;
+
+    if (Object.keys(updateData).length > 0) {
+      const fields = [];
+      const values = [];
+      for (const [key, val] of Object.entries(updateData)) {
+        fields.push(`\`${key}\` = ?`);
+        values.push(val);
+      }
+      values.push(id);
+
+      await db.query(
+        `UPDATE PrebuiltUi SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+
+    const [updatedRows] = await db.query('SELECT * FROM PrebuiltUi WHERE id = ? LIMIT 1', [id]);
+    const updated = updatedRows[0];
 
     res.json({ success: true, message: 'Pre-built UI updated successfully.', data: updated });
   } catch (err) {
@@ -613,12 +593,13 @@ router.delete('/uis/:id', authAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const ui = await prisma.prebuiltUi.findUnique({ where: { id } });
+    const [uiRows] = await db.query('SELECT * FROM PrebuiltUi WHERE id = ? LIMIT 1', [id]);
+    const ui = uiRows[0];
     if (!ui) {
       return res.status(404).json({ success: false, message: 'UI not found.' });
     }
 
-    await prisma.prebuiltUi.delete({ where: { id } });
+    await db.query('DELETE FROM PrebuiltUi WHERE id = ?', [id]);
 
     res.json({ success: true, message: 'Pre-built UI deleted successfully.' });
   } catch (err) {

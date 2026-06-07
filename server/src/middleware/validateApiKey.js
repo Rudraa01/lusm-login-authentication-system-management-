@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const db = require('../utils/db');
 
 /**
  * Middleware to validate API key from x-api-key header.
@@ -17,17 +16,37 @@ const validateApiKey = async (req, res, next) => {
   }
 
   try {
-    const project = await prisma.project.findUnique({
-      where: { apiKey },
-      include: { developer: { select: { name: true, email: true } } },
-    });
+    const [rows] = await db.query(
+      `SELECT p.*, d.name AS developerName, d.email AS developerEmail 
+       FROM Project p
+       JOIN Developer d ON p.developerId = d.id
+       WHERE p.apiKey = ? LIMIT 1`,
+      [apiKey]
+    );
+    const rawProject = rows[0];
 
-    if (!project) {
+    if (!rawProject) {
       return res.status(401).json({
         success: false,
         message: 'Invalid API key.',
       });
     }
+
+    const project = {
+      id: rawProject.id,
+      name: rawProject.name,
+      description: rawProject.description,
+      logoUrl: rawProject.logoUrl,
+      apiKey: rawProject.apiKey,
+      allowedOrigins: rawProject.allowedOrigins,
+      developerId: rawProject.developerId,
+      createdAt: rawProject.createdAt,
+      updatedAt: rawProject.updatedAt,
+      developer: {
+        name: rawProject.developerName,
+        email: rawProject.developerEmail,
+      }
+    };
 
     // Check origin if allowedOrigins is set
     const origin = req.headers.origin || req.headers.referer || '';

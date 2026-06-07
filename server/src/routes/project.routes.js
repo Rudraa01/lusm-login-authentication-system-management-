@@ -1,10 +1,9 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { PrismaClient } = require('@prisma/client');
+const db = require('../utils/db');
 const authDeveloper = require('../middleware/authDeveloper');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * Generate a unique API key in the format: autheasy_xxxx_xxxx_xxxx
@@ -35,9 +34,11 @@ router.post('/', authDeveloper, async (req, res) => {
     }
 
     // Check project limit (max 10 projects per developer for free tier)
-    const projectCount = await prisma.project.count({
-      where: { developerId: req.developer.id },
-    });
+    const [countRows] = await db.query(
+      'SELECT COUNT(*) AS count FROM Project WHERE developerId = ?',
+      [req.developer.id]
+    );
+    const projectCount = countRows[0].count;
 
     if (projectCount >= 10) {
       return res.status(403).json({
@@ -47,29 +48,36 @@ router.post('/', authDeveloper, async (req, res) => {
     }
 
     const apiKey = generateApiKey();
+    const projectId = uuidv4();
+    const createdAt = new Date();
 
-    const project = await prisma.project.create({
-      data: {
-        name: name.trim(),
-        description: description || '',
-        logoUrl: logoUrl || '',
+    await db.query(
+      `INSERT INTO Project (id, name, description, logoUrl, apiKey, allowedOrigins, developerId, createdAt, updatedAt) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        projectId,
+        name.trim(),
+        description || '',
+        logoUrl || '',
         apiKey,
-        allowedOrigins: allowedOrigins || '',
-        developerId: req.developer.id,
-      },
-    });
+        allowedOrigins || '',
+        req.developer.id,
+        createdAt,
+        createdAt,
+      ]
+    );
 
     res.status(201).json({
       success: true,
       message: 'Project created successfully.',
       data: {
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        logoUrl: project.logoUrl,
-        apiKey: project.apiKey,
-        allowedOrigins: project.allowedOrigins,
-        createdAt: project.createdAt,
+        id: projectId,
+        name: name.trim(),
+        description: description || '',
+        logoUrl: logoUrl || '',
+        apiKey,
+        allowedOrigins: allowedOrigins || '',
+        createdAt,
       },
     });
   } catch (err) {
@@ -84,13 +92,13 @@ router.post('/', authDeveloper, async (req, res) => {
  */
 router.get('/', authDeveloper, async (req, res) => {
   try {
-    const projects = await prisma.project.findMany({
-      where: { developerId: req.developer.id },
-      include: {
-        _count: { select: { endUsers: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [projects] = await db.query(
+      `SELECT p.*, (SELECT COUNT(*) FROM EndUser e WHERE e.projectId = p.id) AS userCount
+       FROM Project p
+       WHERE p.developerId = ?
+       ORDER BY p.createdAt DESC`,
+      [req.developer.id]
+    );
 
     const data = projects.map((p) => ({
       id: p.id,
@@ -99,7 +107,7 @@ router.get('/', authDeveloper, async (req, res) => {
       logoUrl: p.logoUrl,
       apiKey: p.apiKey,
       allowedOrigins: p.allowedOrigins,
-      userCount: p._count.endUsers,
+      userCount: p.userCount,
       createdAt: p.createdAt,
     }));
 
@@ -116,15 +124,14 @@ router.get('/', authDeveloper, async (req, res) => {
  */
 router.get('/:id', authDeveloper, async (req, res) => {
   try {
-    const project = await prisma.project.findFirst({
-      where: {
-        id: req.params.id,
-        developerId: req.developer.id,
-      },
-      include: {
-        _count: { select: { endUsers: true } },
-      },
-    });
+    const [rows] = await db.query(
+      `SELECT p.*, (SELECT COUNT(*) FROM EndUser e WHERE e.projectId = p.id) AS userCount
+       FROM Project p
+       WHERE p.id = ? AND p.developerId = ?
+       LIMIT 1`,
+      [req.params.id, req.developer.id]
+    );
+    const project = rows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -142,7 +149,7 @@ router.get('/:id', authDeveloper, async (req, res) => {
         logoUrl: project.logoUrl,
         apiKey: project.apiKey,
         allowedOrigins: project.allowedOrigins,
-        userCount: project._count.endUsers,
+        userCount: project.userCount,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
       },
@@ -162,9 +169,11 @@ router.put('/:id', authDeveloper, async (req, res) => {
     const { name, description, logoUrl, allowedOrigins } = req.body;
 
     // Verify ownership
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    const [rows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
+    const project = rows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -179,10 +188,26 @@ router.put('/:id', authDeveloper, async (req, res) => {
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl.trim();
     if (allowedOrigins !== undefined) updateData.allowedOrigins = allowedOrigins.trim();
 
-    const updated = await prisma.project.update({
-      where: { id: req.params.id },
-      data: updateData,
-    });
+    if (Object.keys(updateData).length > 0) {
+      const fields = [];
+      const values = [];
+      for (const [key, val] of Object.entries(updateData)) {
+        fields.push(`\`${key}\` = ?`);
+        values.push(val);
+      }
+      values.push(req.params.id);
+
+      await db.query(
+        `UPDATE Project SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+
+    const [updatedRows] = await db.query(
+      'SELECT * FROM Project WHERE id = ? LIMIT 1',
+      [req.params.id]
+    );
+    const updated = updatedRows[0];
 
     res.json({
       success: true,
@@ -208,9 +233,12 @@ router.put('/:id', authDeveloper, async (req, res) => {
  */
 router.delete('/:id', authDeveloper, async (req, res) => {
   try {
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    // Verify ownership
+    const [rows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
+    const project = rows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -219,7 +247,7 @@ router.delete('/:id', authDeveloper, async (req, res) => {
       });
     }
 
-    await prisma.project.delete({ where: { id: req.params.id } });
+    await db.query('DELETE FROM Project WHERE id = ?', [req.params.id]);
 
     res.json({
       success: true,
@@ -237,9 +265,12 @@ router.delete('/:id', authDeveloper, async (req, res) => {
  */
 router.post('/:id/regenerate-key', authDeveloper, async (req, res) => {
   try {
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    // Verify ownership
+    const [rows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
+    const project = rows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -250,10 +281,7 @@ router.post('/:id/regenerate-key', authDeveloper, async (req, res) => {
 
     const newApiKey = generateApiKey();
 
-    await prisma.project.update({
-      where: { id: req.params.id },
-      data: { apiKey: newApiKey },
-    });
+    await db.query('UPDATE Project SET apiKey = ? WHERE id = ?', [newApiKey, req.params.id]);
 
     res.json({
       success: true,
@@ -274,9 +302,12 @@ router.put('/:id/origins', authDeveloper, async (req, res) => {
   try {
     const { allowedOrigins } = req.body;
 
-    const project = await prisma.project.findFirst({
-      where: { id: req.params.id, developerId: req.developer.id },
-    });
+    // Verify ownership
+    const [rows] = await db.query(
+      'SELECT id FROM Project WHERE id = ? AND developerId = ? LIMIT 1',
+      [req.params.id, req.developer.id]
+    );
+    const project = rows[0];
 
     if (!project) {
       return res.status(404).json({
@@ -285,10 +316,7 @@ router.put('/:id/origins', authDeveloper, async (req, res) => {
       });
     }
 
-    await prisma.project.update({
-      where: { id: req.params.id },
-      data: { allowedOrigins: allowedOrigins || '' },
-    });
+    await db.query('UPDATE Project SET allowedOrigins = ? WHERE id = ?', [allowedOrigins || '', req.params.id]);
 
     res.json({
       success: true,

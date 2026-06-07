@@ -38,13 +38,12 @@ console.log('Public Path:', publicPath);
 
 app.use(express.json());
 
+const db = require('./utils/db');
+
 // ─── Setup DB Route (Temporary) ─────────────────────────────────
 app.get('/api/setup-db', async (req, res) => {
   let log = '=== DATABASE MIGRATION VIA RAW SQL ===\n';
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-    
     const queries = [
       // 1. Developer Table
       {
@@ -57,7 +56,7 @@ app.get('/api/setup-db', async (req, res) => {
             \`isBlocked\` BOOLEAN NOT NULL DEFAULT false,
             \`isVerified\` BOOLEAN NOT NULL DEFAULT false,
             \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-            \`updatedAt\` DATETIME(3) NOT NULL,
+            \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
             UNIQUE INDEX \`Developer_email_key\`(\`email\`),
             PRIMARY KEY (\`id\`)
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
@@ -74,7 +73,7 @@ app.get('/api/setup-db', async (req, res) => {
             \`allowedOrigins\` VARCHAR(191) NOT NULL DEFAULT '',
             \`developerId\` VARCHAR(191) NOT NULL,
             \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-            \`updatedAt\` DATETIME(3) NOT NULL,
+            \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
             UNIQUE INDEX \`Project_apiKey_key\`(\`apiKey\`),
             INDEX \`Project_developerId_idx\`(\`developerId\`),
             PRIMARY KEY (\`id\`)
@@ -94,7 +93,7 @@ app.get('/api/setup-db', async (req, res) => {
             \`isBlocked\` BOOLEAN NOT NULL DEFAULT false,
             \`projectId\` VARCHAR(191) NOT NULL,
             \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-            \`updatedAt\` DATETIME(3) NOT NULL,
+            \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
             INDEX \`EndUser_projectId_idx\`(\`projectId\`),
             UNIQUE INDEX \`EndUser_email_projectId_key\`(\`email\`, \`projectId\`),
             UNIQUE INDEX \`EndUser_phone_projectId_key\`(\`phone\`, \`projectId\`),
@@ -160,7 +159,7 @@ app.get('/api/setup-db', async (req, res) => {
             \`jsCode\` LONGTEXT NOT NULL,
             \`reactCode\` LONGTEXT NOT NULL,
             \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-            \`updatedAt\` DATETIME(3) NOT NULL,
+            \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
             PRIMARY KEY (\`id\`)
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
       },
@@ -194,7 +193,7 @@ app.get('/api/setup-db', async (req, res) => {
     for (const q of queries) {
       log += `\nRunning: ${q.name}...\n`;
       try {
-        await prisma.$executeRawUnsafe(q.sql);
+        await db.query(q.sql);
         log += `SUCCESS\n`;
       } catch (err) {
         log += `WARNING/FAILED: ${err.message}\n`;
@@ -202,24 +201,21 @@ app.get('/api/setup-db', async (req, res) => {
     }
 
     log += '\n=== MIGRATION COMPLETE ===\n';
-    await prisma.$disconnect();
     res.send(`<pre>${log}</pre>`);
   } catch (err) {
     res.status(500).send(`<pre>General error running setup-db:\n\n${err.message}\n${err.stack}</pre>`);
   }
 });
 
-// ─── Test Prisma Route ──────────────────────────────────────────
+// ─── Test Prisma Route (Now test-db using mysql2) ────────────────
 app.get('/api/test-prisma', async (req, res) => {
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-    const count = await prisma.developer.count();
-    res.json({ success: true, message: 'Prisma is working perfectly!', developerCount: count });
+    const [rows] = await db.query('SELECT COUNT(*) AS count FROM Developer');
+    res.json({ success: true, message: 'Database connection via mysql2 is working perfectly!', developerCount: rows[0].count });
   } catch (err) {
     res.status(500).json({ 
       success: false, 
-      message: 'Prisma crashed during a simple query.', 
+      message: 'Database query failed.', 
       error: err.message, 
       stack: err.stack 
     });

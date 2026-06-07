@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const db = require('../utils/db');
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * Middleware to asynchronously log all incoming public API requests.
@@ -12,14 +12,17 @@ const requestLogger = (req, res, next) => {
     if (req.project && req.project.id) {
       try {
         // Log to database asynchronously without blocking client responses
-        await prisma.apiRequestLog.create({
-          data: {
-            endpoint: req.baseUrl + req.path,
-            method: req.method,
-            statusCode: res.statusCode,
-            projectId: req.project.id,
-          },
-        });
+        await db.query(
+          `INSERT INTO ApiRequestLog (id, endpoint, method, statusCode, projectId, createdAt) 
+           VALUES (?, ?, ?, ?, ?, NOW(3))`,
+          [
+            uuidv4(),
+            req.baseUrl + req.path,
+            req.method,
+            res.statusCode,
+            req.project.id,
+          ]
+        );
       } catch (err) {
         console.error('Request logger middleware error:', err);
       }
