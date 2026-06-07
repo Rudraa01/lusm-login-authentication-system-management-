@@ -18,6 +18,9 @@ try {
 
 const express = require('express');
 
+// TEST ROUTE IMPORT
+const developerAuthRoutes = require('./routes/developer.auth.routes');
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -35,6 +38,9 @@ app.get('/api/health', (req, res) => {
     message: 'AuthEasy API is running'
   });
 });
+
+// TEST ONLY THIS ROUTE
+app.use('/api/dash', developerAuthRoutes);
 
 console.log('About to start server...');
 
