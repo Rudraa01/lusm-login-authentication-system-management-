@@ -74,7 +74,7 @@ export default function LandingPage() {
             <a href="#how-it-works">How it Works</a>
             <a href="#code">Integration</a>
             <Link to="/login" className="btn btn-ghost">Login</Link>
-            <Link to="/signup" className="btn btn-primary">Get Started Free</Link>
+            <Link to="/signup" className="btn btn-primary">Get Started</Link>
           </div>
         </div>
       </nav>

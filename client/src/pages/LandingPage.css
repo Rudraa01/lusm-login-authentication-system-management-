@@ -688,6 +688,19 @@
 
 /* ─── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
+  .landing-nav {
+    padding: 0 12px;
+  }
+
+  .nav-links {
+    gap: 8px;
+  }
+
+  .nav-links .btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
   .nav-links a:not(.btn) {
     display: none;
   }
