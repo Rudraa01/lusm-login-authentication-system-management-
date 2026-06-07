@@ -56,3 +56,7 @@ app.use('/api/dash/projects', projectRoutes);
 const userManagementRoutes = require('./routes/user.management.routes');
 
 app.use('/api/dash/projects', userManagementRoutes);
+
+const adminRoutes = require('./routes/admin.routes');
+
+app.use('/api/admin', adminRoutes);
