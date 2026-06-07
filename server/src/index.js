@@ -209,6 +209,23 @@ app.get('/api/setup-db', async (req, res) => {
   }
 });
 
+// ─── Test Prisma Route ──────────────────────────────────────────
+app.get('/api/test-prisma', async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const count = await prisma.developer.count();
+    res.json({ success: true, message: 'Prisma is working perfectly!', developerCount: count });
+  } catch (err) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Prisma crashed during a simple query.', 
+      error: err.message, 
+      stack: err.stack 
+    });
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({
