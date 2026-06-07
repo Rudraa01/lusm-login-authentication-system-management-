@@ -42,8 +42,9 @@ app.use(express.json());
 app.get('/api/setup-db', (req, res) => {
   try {
     const { execSync } = require('child_process');
-    console.log('Running database migrations manually via route...');
-    const output = execSync('node ./node_modules/prisma/build/index.js migrate deploy', { 
+    const nodePath = process.execPath;
+    console.log('Running database migrations manually via route with node:', nodePath);
+    const output = execSync(`"${nodePath}" ./node_modules/prisma/build/index.js migrate deploy`, { 
       cwd: path.join(__dirname, '../')
     });
     res.send(`<pre>Database migrated successfully!\n\n${output.toString()}</pre>`);
