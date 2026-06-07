@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './AuthPages.css';
 
@@ -78,6 +78,11 @@ export default function SignupPage() {
           <div className="auth-orb auth-orb-2" />
         </div>
 
+        <Link to="/" className="back-to-home-link">
+          <ArrowLeft size={16} />
+          Back to Home
+        </Link>
+
         <div className="auth-container animate-slide-up">
           <div className="auth-logo">
             <div className="logo-icon">
@@ -146,6 +151,11 @@ export default function SignupPage() {
         <div className="auth-orb auth-orb-1" />
         <div className="auth-orb auth-orb-2" />
       </div>
+
+      <Link to="/" className="back-to-home-link">
+        <ArrowLeft size={16} />
+        Back to Home
+      </Link>
 
       <div className="auth-container animate-slide-up">
         <Link to="/" className="auth-logo">
