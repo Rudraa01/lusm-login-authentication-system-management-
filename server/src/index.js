@@ -38,6 +38,21 @@ console.log('Public Path:', publicPath);
 
 app.use(express.json());
 
+// ─── Setup DB Route (Temporary) ─────────────────────────────────
+app.get('/api/setup-db', (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    console.log('Running database migrations manually via route...');
+    const output = execSync('node ./node_modules/prisma/build/index.js migrate deploy', { 
+      cwd: path.join(__dirname, '../')
+    });
+    res.send(`<pre>Database migrated successfully!\n\n${output.toString()}</pre>`);
+  } catch (err) {
+    console.error('Manual DB Setup Error:', err);
+    res.status(500).send(`<pre>Database migration failed:\n\n${err.message}\n\n${err.stdout ? err.stdout.toString() : ''}\n\n${err.stderr ? err.stderr.toString() : ''}</pre>`);
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({
