@@ -43,14 +43,53 @@ app.get('/api/setup-db', (req, res) => {
   try {
     const { execSync } = require('child_process');
     const nodePath = process.execPath;
-    console.log('Running database migrations manually via route with node:', nodePath);
-    const output = execSync(`"${nodePath}" ./node_modules/prisma/build/index.js migrate deploy`, { 
-      cwd: path.join(__dirname, '../')
-    });
-    res.send(`<pre>Database migrated successfully!\n\n${output.toString()}</pre>`);
+    
+    // Run diagnostics
+    let log = '';
+    const runCmd = (cmd) => {
+      log += `\n$ ${cmd}\n`;
+      try {
+        log += execSync(cmd, { cwd: path.join(__dirname, '../'), env: { ...process.env, RUST_BACKTRACE: '1' } }).toString();
+      } catch (e) {
+        log += `ERROR: ${e.message}\nStdout: ${e.stdout ? e.stdout.toString() : ''}\nStderr: ${e.stderr ? e.stderr.toString() : ''}\n`;
+      }
+    };
+
+    runCmd('uname -a');
+    runCmd('openssl version');
+    runCmd('ldd --version');
+    runCmd('ls -la node_modules/@prisma/engines');
+    
+    // Find schema engine binary and try running it directly
+    const fs = require('fs');
+    const enginesDir = path.join(__dirname, '../node_modules/@prisma/engines');
+    if (fs.existsSync(enginesDir)) {
+      const files = fs.readdirSync(enginesDir);
+      const schemaEngine = files.find(f => f.startsWith('schema-engine-') || f.startsWith('migration-engine-'));
+      if (schemaEngine) {
+        runCmd(`"${path.join(enginesDir, schemaEngine)}" --version`);
+      } else {
+        log += '\nNo schema-engine binary found in @prisma/engines\n';
+      }
+    } else {
+      log += '\n@prisma/engines directory does not exist\n';
+    }
+
+    // Attempt migration with debug flags
+    log += '\n--- Attempting migration with DEBUG=* and RUST_BACKTRACE=1 ---\n';
+    try {
+      const output = execSync(`"${nodePath}" ./node_modules/prisma/build/index.js migrate deploy`, {
+        cwd: path.join(__dirname, '../'),
+        env: { ...process.env, DEBUG: '*', RUST_BACKTRACE: '1' }
+      });
+      log += `SUCCESS:\n${output.toString()}\n`;
+    } catch (e) {
+      log += `FAILED:\n${e.message}\nStdout: ${e.stdout ? e.stdout.toString() : ''}\nStderr: ${e.stderr ? e.stderr.toString() : ''}\n`;
+    }
+
+    res.send(`<pre>${log}</pre>`);
   } catch (err) {
-    console.error('Manual DB Setup Error:', err);
-    res.status(500).send(`<pre>Database migration failed:\n\n${err.message}\n\n${err.stdout ? err.stdout.toString() : ''}\n\n${err.stderr ? err.stderr.toString() : ''}</pre>`);
+    res.status(500).send(`<pre>General error running setup-db:\n\n${err.message}\n${err.stack}</pre>`);
   }
 });
 
