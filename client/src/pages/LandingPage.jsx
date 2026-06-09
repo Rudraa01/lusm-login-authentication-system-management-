@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Shield, Zap, Users, Code2, Lock, Mail, ArrowRight, ChevronRight } from 'lucide-react';
 import './LandingPage.css';
 
@@ -59,6 +60,8 @@ const data = await response.json();
 // { success: true, message: "OTP sent to email" }`;
 
 export default function LandingPage() {
+  const { developer } = useAuth();
+
   return (
     <div className="landing">
       {/* Navigation */}
@@ -73,8 +76,14 @@ export default function LandingPage() {
             <a href="#features">Features</a>
             <a href="#how-it-works">How it Works</a>
             <a href="#code">Integration</a>
-            <Link to="/login" className="btn btn-ghost">Login</Link>
-            <Link to="/signup" className="btn btn-primary">Get Started</Link>
+            {developer ? (
+              <Link to="/dashboard" className="btn btn-primary">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-ghost">Login</Link>
+                <Link to="/signup" className="btn btn-primary">Get Started</Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -103,10 +112,17 @@ export default function LandingPage() {
             Email OTP, JWT tokens, and user management — just integrate our API.
           </p>
           <div className="hero-actions animate-slide-up">
-            <Link to="/signup" className="btn btn-primary btn-lg">
-              Start Building Free
-              <ArrowRight size={18} />
-            </Link>
+            {developer ? (
+              <Link to="/dashboard" className="btn btn-primary btn-lg">
+                Go to Dashboard
+                <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <Link to="/signup" className="btn btn-primary btn-lg">
+                Start Building Free
+                <ArrowRight size={18} />
+              </Link>
+            )}
             <a href="#code" className="btn btn-secondary btn-lg">
               View API Docs
               <ChevronRight size={18} />
@@ -239,10 +255,17 @@ export default function LandingPage() {
         <div className="cta-content">
           <h2>Ready to add authentication to your app?</h2>
           <p>Join AuthEasy and get your API key in under a minute. Completely free.</p>
-          <Link to="/signup" className="btn btn-primary btn-lg">
-            Get Started Free
-            <ArrowRight size={18} />
-          </Link>
+          {developer ? (
+            <Link to="/dashboard" className="btn btn-primary btn-lg">
+              Go to Dashboard
+              <ArrowRight size={18} />
+            </Link>
+          ) : (
+            <Link to="/signup" className="btn btn-primary btn-lg">
+              Get Started Free
+              <ArrowRight size={18} />
+            </Link>
+          )}
         </div>
       </section>
 
