@@ -23,4 +23,28 @@ router.get('/', authLimiter, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/v1/ui/:id
+ * Fetch a single prebuilt UI by ID for public previews
+ */
+router.get('/:id', authLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.query(
+      `SELECT id, title, description, type, htmlCode, cssCode, jsCode, reactCode, createdAt, updatedAt 
+       FROM PrebuiltUi 
+       WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const ui = rows[0];
+    if (!ui) {
+      return res.status(404).json({ success: false, message: 'UI template not found.' });
+    }
+    res.json({ success: true, data: ui });
+  } catch (err) {
+    console.error('Fetch UI error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
 module.exports = router;

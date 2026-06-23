@@ -13,6 +13,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import DocsPage from './pages/DocsPage';
 import SettingsPage from './pages/SettingsPage';
 import PrebuiltUIsPage from './pages/PrebuiltUIsPage';
+import PreviewPage from './pages/PreviewPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -126,6 +127,10 @@ function App() {
                   <SignupPage />
                 </AuthRoute>
               }
+            />
+            <Route
+              path="/preview/:id"
+              element={<PreviewPage />}
             />
 
             {/* Protected Dashboard Routes */}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
-import { Download, LayoutTemplate, Code, Eye, MonitorPlay, CheckCircle } from 'lucide-react';
+import { Download, LayoutTemplate, Code, Eye, MonitorPlay, CheckCircle, Share2 } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 import './DashboardPages.css';
 
 export default function PrebuiltUIsPage() {
@@ -209,6 +210,13 @@ ${ui.htmlCode || ''}
     }
   };
 
+  const handleShare = (ui) => {
+    if (!ui) return;
+    const shareUrl = `${window.location.origin}/preview/${ui.id}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Share link copied to clipboard! 🚀');
+  };
+
   const targetWidth = previewMode === 'desktop' ? 1280 : 375;
   const targetHeight = previewMode === 'desktop' ? 800 : 667;
 
@@ -295,19 +303,30 @@ ${ui.htmlCode || ''}
                     </button>
                   </div>
 
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => handleDownload(selectedUi)}
-                    disabled={downloading}
-                    style={{ padding: '8px 16px', borderRadius: '8px' }}
-                  >
-                    {downloading ? (
-                      <span className="spinner" style={{ width: '14px', height: '14px', marginRight: '6px' }}></span>
-                    ) : (
-                      <Download size={14} style={{ marginRight: '6px' }} />
-                    )}
-                    {downloading ? 'Downloading...' : 'Download ZIP'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleShare(selectedUi)}
+                      style={{ padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Share2 size={14} />
+                      Share
+                    </button>
+
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => handleDownload(selectedUi)}
+                      disabled={downloading}
+                      style={{ padding: '8px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {downloading ? (
+                        <span className="spinner" style={{ width: '14px', height: '14px' }}></span>
+                      ) : (
+                        <Download size={14} />
+                      )}
+                      {downloading ? 'Downloading...' : 'Download ZIP'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Iframe Frame Box */}
