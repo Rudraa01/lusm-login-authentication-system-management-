@@ -240,28 +240,18 @@ ${ui.htmlCode || ''}
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#070b13', overflow: 'hidden' }}>
       
       {/* Premium Public Header */}
-      <header style={{
-        height: '70px',
-        background: 'rgba(15, 23, 42, 0.8)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        zIndex: 100,
-        flexShrink: 0
-      }}>
+      <header className="preview-header">
         {/* Left Side: Brand Logo and Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="preview-logo-section">
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <img src="/logo.png" alt="AuthEasy" style={{ height: '24px' }} />
-            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '16px', letterSpacing: '0.5px' }}>AuthEasy</span>
           </Link>
-          <div style={{ height: '16px', width: '1px', background: 'rgba(255,255,255,0.15)' }}></div>
-          <div>
-            <span style={{ fontSize: '14px', fontWeight: 500, color: '#f8fafc' }}>{ui.title}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>({ui.type})</span>
+          <div className="preview-logo-divider"></div>
+          <div className="preview-title-container">
+            <div>
+              <span className="preview-title-text">{ui.title}</span>
+              <span className="preview-type-badge">({ui.type})</span>
+            </div>
           </div>
         </div>
 
@@ -283,17 +273,17 @@ ${ui.htmlCode || ''}
         </div>
 
         {/* Right Side: Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="preview-actions">
           <button 
-            className="btn btn-secondary" 
+            className="btn btn-secondary preview-btn-icon-only" 
             onClick={handleShare}
             style={{ padding: '8px 14px', height: '38px', borderRadius: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <Share2 size={14} /> Share
+            <Share2 size={14} /> <span className="preview-btn-text">Share</span>
           </button>
 
           <button 
-            className="btn btn-ghost" 
+            className="btn btn-ghost preview-btn-icon-only" 
             onClick={handleDownload}
             disabled={downloading}
             style={{ padding: '8px 14px', height: '38px', borderRadius: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -303,12 +293,12 @@ ${ui.htmlCode || ''}
             ) : (
               <Download size={14} />
             )}
-            Download ZIP
+            <span className="preview-btn-text">Download ZIP</span>
           </button>
 
           <Link 
             to="/signup" 
-            className="btn btn-primary"
+            className="btn btn-primary preview-btn-primary-mobile"
             style={{ 
               padding: '8px 16px', 
               height: '38px', 
@@ -321,7 +311,9 @@ ${ui.htmlCode || ''}
               boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)'
             }}
           >
-            Get Started Free <ExternalLink size={13} />
+            <span className="preview-btn-text">Get Started Free</span>
+            <span className="show-on-mobile-inline">Get Started</span>
+            <ExternalLink size={13} />
           </Link>
         </div>
       </header>
@@ -452,20 +444,8 @@ ${ui.htmlCode || ''}
         </div>
 
         {/* Viral Marketing Bottom Banner */}
-        <div style={{
-          background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.9), rgba(99, 102, 241, 0.1) 50%, rgba(15, 23, 42, 0.9))',
-          border: '1px solid rgba(99, 102, 241, 0.2)',
-          borderRadius: '12px',
-          padding: '12px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: '16px',
-          flexShrink: 0,
-          gap: '16px',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="preview-banner">
+          <div className="preview-banner-left">
             <div style={{
               background: 'rgba(99, 102, 241, 0.15)',
               color: 'var(--accent-primary)',
@@ -475,18 +455,19 @@ ${ui.htmlCode || ''}
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 700
+              fontWeight: 700,
+              flexShrink: 0
             }}>🚀</div>
             <div>
-              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>
+              <p className="preview-banner-text-main">
                 Want to integrate this Authentication template into your app?
               </p>
-              <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)' }}>
+              <p className="preview-banner-text-sub">
                 AuthEasy handles logins, OTP email verifications, and passwords with just 1 API call — 100% Free.
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+          <div className="preview-banner-checklist">
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} /> HTML/CSS/JS Included</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle size={14} style={{ color: 'var(--accent-primary)' }} /> React Component Included</span>
           </div>
