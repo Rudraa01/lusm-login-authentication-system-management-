@@ -34,7 +34,7 @@ api.interceptors.response.use(
         localStorage.removeItem('autheasy_admin_token');
         localStorage.removeItem('autheasy_admin');
         if (window.location.pathname.startsWith('/admin')) {
-          window.location.href = '/admin/login';
+          window.location.href = '/admin/autheasy-2006';
         }
       } else {
         // Token expired or invalid, redirect to login

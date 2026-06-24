@@ -13,6 +13,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import DocsPage from './pages/DocsPage';
 import SettingsPage from './pages/SettingsPage';
 import PrebuiltUIsPage from './pages/PrebuiltUIsPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -77,7 +78,7 @@ function ProtectedAdminRoute({ children }) {
   }
 
   if (!admin) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin/autheasy-2006" replace />;
   }
 
   return children;
@@ -151,7 +152,7 @@ function App() {
 
             {/* Admin Login Route */}
             <Route
-              path="/admin/login"
+              path="/admin/autheasy-2006"
               element={
                 <AdminAuthRoute>
                   <AdminLoginPage />
@@ -175,8 +176,8 @@ function App() {
               <Route path="analytics" element={<AdminAnalyticsPage />} />
             </Route>
 
-            {/* Fallback Redirect */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Fallback 404 Page */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Router>
         <Toaster
