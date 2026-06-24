@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { Download, LayoutTemplate, Code, Eye, MonitorPlay, CheckCircle, Share2 } from 'lucide-react';
@@ -11,6 +11,8 @@ import './LandingPage.css';
 
 export default function PrebuiltUIsPage({ isPublic = false }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectId = searchParams.get('id');
   const { developer } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [uis, setUis] = useState([]);
@@ -28,6 +30,15 @@ export default function PrebuiltUIsPage({ isPublic = false }) {
   useEffect(() => {
     fetchUis();
   }, []);
+
+  useEffect(() => {
+    if (uis.length > 0 && selectId) {
+      const target = uis.find(ui => String(ui.id) === String(selectId));
+      if (target) {
+        setSelectedUi(target);
+      }
+    }
+  }, [selectId, uis]);
 
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -62,7 +73,10 @@ export default function PrebuiltUIsPage({ isPublic = false }) {
       if (res.data.success) {
         setUis(res.data.data);
         if (res.data.data.length > 0) {
-          setSelectedUi(res.data.data[0]);
+          const preselected = selectId 
+            ? res.data.data.find(ui => String(ui.id) === String(selectId))
+            : null;
+          setSelectedUi(preselected || res.data.data[0]);
         }
       }
     } catch (err) {
@@ -223,7 +237,7 @@ ${ui.htmlCode || ''}
 
   const handleShare = (ui) => {
     if (!ui) return;
-    const shareUrl = `${window.location.origin}/preview/${ui.id}`;
+    const shareUrl = `${window.location.origin}/templates?id=${ui.id}`;
     navigator.clipboard.writeText(shareUrl);
     toast.success('Share link copied to clipboard! 🚀');
   };
