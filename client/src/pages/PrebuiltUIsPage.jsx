@@ -541,10 +541,16 @@ ${ui.htmlCode || ''}
           <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="auth-modal-glow" />
             <button className="auth-modal-close" onClick={() => setShowAuthModal(false)}>×</button>
-            <div className="auth-modal-content">
-              <div className="auth-modal-icon">🔒</div>
+            
+            {/* Left side: Image Section */}
+            <div className="auth-modal-image-section">
+              <img src="/autheasyimg2.png" alt="AuthEasy Templates" className="auth-modal-image" />
+            </div>
+
+            {/* Right side: Content Section */}
+            <div className="auth-modal-content-section">
               <h3>Join AuthEasy to Download</h3>
-              <p>Create a free developer account to download this premium authentication template and access all our pre-built elements.</p>
+              <p>Create a free developer account to download this premium template and get unlimited access to all pre-built elements.</p>
               <div className="auth-modal-actions">
                 <button className="btn btn-primary" onClick={() => { setShowAuthModal(false); navigate('/signup'); }}>
                   Create Free Account
@@ -554,7 +560,7 @@ ${ui.htmlCode || ''}
                 </button>
               </div>
               <div className="auth-modal-footer">
-                100% Free • No Credit Card Required • Instant Setup
+                100% Free • Instant Setup
               </div>
             </div>
           </div>
