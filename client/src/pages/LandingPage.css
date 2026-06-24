@@ -838,8 +838,6 @@
   max-height: 280px;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  animation: float 6s ease-in-out infinite;
 }
 
 /* Right side content section */
@@ -895,15 +893,15 @@
 }
 
 .auth-modal-actions .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+  background: var(--gradient-primary);
   border: none;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-  color: var(--text-white);
+  box-shadow: 0 4px 12px rgba(163, 149, 129, 0.25);
+  color: var(--bg-primary);
 }
 
 .auth-modal-actions .btn-primary:hover {
   filter: brightness(1.1);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 6px 16px rgba(163, 149, 129, 0.35);
 }
 
 .auth-modal-actions .btn-ghost {
