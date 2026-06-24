@@ -73,6 +73,7 @@ export default function LandingPage() {
             </div>
           </Link>
           <div className="nav-links">
+            <Link to="/templates">UI Templates</Link>
             <a href="#features">Features</a>
             <a href="#how-it-works">How it Works</a>
             <a href="#code">Integration</a>

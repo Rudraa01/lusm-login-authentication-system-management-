@@ -132,6 +132,10 @@ function App() {
               path="/preview/:id"
               element={<PreviewPage />}
             />
+            <Route
+              path="/templates"
+              element={<PrebuiltUIsPage isPublic={true} />}
+            />
 
             {/* Protected Dashboard Routes */}
             <Route
