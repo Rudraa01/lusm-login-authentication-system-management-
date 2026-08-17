@@ -266,10 +266,7 @@ ${ui.htmlCode || ''}
 
             {/* Desktop Navigation Links */}
             <div className="nav-links">
-              <Link to="/templates" className="nav-link-templates active">
-                <span className="templates-badge-dot" />
-                UI Templates
-              </Link>
+              <Link to="/templates">UI Templates</Link>
               <a href="/#features">Features</a>
               <a href="/#how-it-works">How it Works</a>
               <a href="/#code">Integration</a>
@@ -309,16 +306,10 @@ ${ui.htmlCode || ''}
             <div className="mobile-menu-drawer animate-slide-down">
               <Link
                 to="/templates"
-                className="mobile-nav-item mobile-nav-item-highlight"
+                className="mobile-nav-item"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="templates-badge-dot" />
-                  <span>UI Templates</span>
-                </div>
-                <span className="mobile-nav-badge">
-                  NEW
-                </span>
+                UI Templates
               </Link>
 
               <a href="/#features" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
