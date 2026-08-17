@@ -184,7 +184,23 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
+              <Link
+                to="/forgot-password"
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--accent-primary)',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  transition: 'opacity 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="input-with-icon">
               <Lock size={18} className="input-icon" />
               <input

@@ -62,6 +62,22 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const forgotDeveloperPassword = async (email) => {
+    const res = await api.post('/api/dash/forgot-password', { email });
+    return res.data;
+  };
+
+  const resetDeveloperPassword = async (email, otp, newPassword) => {
+    const res = await api.post('/api/dash/reset-password', { email, otp, newPassword });
+    const { developer: dev, accessToken } = res.data.data;
+
+    localStorage.setItem('autheasy_token', accessToken);
+    localStorage.setItem('autheasy_developer', JSON.stringify(dev));
+    setDeveloper(dev);
+
+    return dev;
+  };
+
   const logout = () => {
     localStorage.removeItem('autheasy_token');
     localStorage.removeItem('autheasy_developer');
@@ -76,6 +92,8 @@ export const AuthProvider = ({ children }) => {
     signup,
     verifyDeveloperOtp,
     resendDeveloperOtp,
+    forgotDeveloperPassword,
+    resetDeveloperPassword,
     logout,
   };
 

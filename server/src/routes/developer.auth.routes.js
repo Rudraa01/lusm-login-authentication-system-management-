@@ -435,4 +435,150 @@ router.put('/me', authDeveloper, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/dash/forgot-password
+ * Send password reset OTP to developer
+ */
+router.post('/forgot-password', authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required.',
+      });
+    }
+
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const developer = devRows[0];
+
+    // To prevent email enumeration, return a generic success message even if developer doesn't exist
+    if (!developer) {
+      return res.json({
+        success: true,
+        message: 'If an account with that email exists, a password reset OTP has been sent.',
+      });
+    }
+
+    if (developer.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact support.',
+      });
+    }
+
+    const otpCode = generateOtp();
+    await db.query(
+      'INSERT INTO Otp (id, code, type, expiresAt, developerId) VALUES (?, ?, ?, ?, ?)',
+      [uuidv4(), otpCode, 'RESET', getOtpExpiry(), developer.id]
+    );
+
+    try {
+      await sendOtpEmail(email, otpCode, 'RESET', 'AuthEasy Developer Portal');
+    } catch (emailErr) {
+      console.error('Failed to send developer reset OTP email:', emailErr);
+    }
+
+    res.json({
+      success: true,
+      message: 'If an account with that email exists, a password reset OTP has been sent.',
+    });
+  } catch (err) {
+    console.error('Developer forgot password error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
+/**
+ * POST /api/dash/reset-password
+ * Reset developer password using OTP
+ */
+router.post('/reset-password', authLimiter, async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP, and new password are required.',
+      });
+    }
+
+    if (!validateStrongPassword(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly 1 @ symbol. No other special characters are allowed.',
+      });
+    }
+
+    const [devRows] = await db.query('SELECT * FROM Developer WHERE email = ? LIMIT 1', [email]);
+    const developer = devRows[0];
+
+    if (!developer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Developer account not found.',
+      });
+    }
+
+    if (developer.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact support.',
+      });
+    }
+
+    // Find valid reset OTP
+    const [otpRows] = await db.query(
+      `SELECT * FROM Otp 
+       WHERE developerId = ? AND code = ? AND type = 'RESET' AND usedAt IS NULL AND expiresAt > ? 
+       ORDER BY createdAt DESC LIMIT 1`,
+      [developer.id, otp, new Date()]
+    );
+    const otpRecord = otpRows[0];
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP code.',
+      });
+    }
+
+    // Mark OTP as used and update password
+    await db.query('UPDATE Otp SET usedAt = ? WHERE id = ?', [new Date(), otpRecord.id]);
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await db.query('UPDATE Developer SET passwordHash = ?, isVerified = 1, updatedAt = ? WHERE id = ?', [
+      passwordHash,
+      new Date(),
+      developer.id,
+    ]);
+
+    // Generate access token for seamless auto-login
+    const accessToken = generateAccessToken({
+      id: developer.id,
+      email: developer.email,
+      role: 'developer',
+    });
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully.',
+      data: {
+        developer: {
+          id: developer.id,
+          name: developer.name,
+          email: developer.email,
+          createdAt: developer.createdAt,
+        },
+        accessToken,
+      },
+    });
+  } catch (err) {
+    console.error('Developer reset password error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
 module.exports = router;

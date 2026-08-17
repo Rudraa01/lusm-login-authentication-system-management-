@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardHome from './pages/DashboardHome';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
@@ -125,6 +126,14 @@ function App() {
               element={
                 <AuthRoute>
                   <SignupPage />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <AuthRoute>
+                  <ForgotPasswordPage />
                 </AuthRoute>
               }
             />
