@@ -73,10 +73,13 @@ export default function LandingPage() {
             </div>
           </Link>
           <div className="nav-links">
-            <Link to="/templates">UI Templates</Link>
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How it Works</a>
-            <a href="#code">Integration</a>
+            <Link to="/templates" className="nav-link-templates">
+              <span className="templates-badge-dot" />
+              UI Templates
+            </Link>
+            <a href="#features" className="nav-link-desktop">Features</a>
+            <a href="#how-it-works" className="nav-link-desktop">How it Works</a>
+            <a href="#code" className="nav-link-desktop">Integration</a>
             {developer ? (
               <Link to="/dashboard" className="btn btn-primary">Dashboard</Link>
             ) : (
