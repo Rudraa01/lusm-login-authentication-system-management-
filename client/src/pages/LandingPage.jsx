@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Zap, Users, Code2, Lock, Mail, ArrowRight, ChevronRight } from 'lucide-react';
+import { Shield, Zap, Users, Code2, Lock, Mail, ArrowRight, ChevronRight, Menu, X } from 'lucide-react';
 import './LandingPage.css';
 
 const features = [
@@ -61,25 +62,30 @@ const data = await response.json();
 
 export default function LandingPage() {
   const { developer } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <div className="landing">
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="nav-container">
-          <Link to="/" className="nav-logo">
+          <Link to="/" className="nav-logo" onClick={closeMobileMenu}>
             <div className="logo-icon">
               <img src="/logo.png" alt="AuthEasy" className="logo-img" />
             </div>
           </Link>
+
+          {/* Desktop Navigation Links */}
           <div className="nav-links">
             <Link to="/templates" className="nav-link-templates">
               <span className="templates-badge-dot" />
               UI Templates
             </Link>
-            <a href="#features" className="nav-link-desktop">Features</a>
-            <a href="#how-it-works" className="nav-link-desktop">How it Works</a>
-            <a href="#code" className="nav-link-desktop">Integration</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it Works</a>
+            <a href="#code">Integration</a>
             {developer ? (
               <Link to="/dashboard" className="btn btn-primary">Dashboard</Link>
             ) : (
@@ -89,7 +95,77 @@ export default function LandingPage() {
               </>
             )}
           </div>
+
+          {/* Mobile Right Controls: Compact CTA + Hamburger Menu Toggle */}
+          <div className="mobile-nav-right">
+            {!developer ? (
+              <Link to="/signup" className="btn btn-primary mobile-quick-cta">
+                Get Started
+              </Link>
+            ) : (
+              <Link to="/dashboard" className="btn btn-primary mobile-quick-cta">
+                Dashboard
+              </Link>
+            )}
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Drawer */}
+        {mobileMenuOpen && (
+          <div className="mobile-menu-drawer animate-slide-down">
+            <Link
+              to="/templates"
+              className="mobile-nav-item mobile-nav-item-highlight"
+              onClick={closeMobileMenu}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="templates-badge-dot" />
+                <span>UI Templates</span>
+              </div>
+              <span className="mobile-nav-badge">
+                NEW
+              </span>
+            </Link>
+
+            <a href="#features" className="mobile-nav-item" onClick={closeMobileMenu}>
+              Features
+            </a>
+            <a href="#how-it-works" className="mobile-nav-item" onClick={closeMobileMenu}>
+              How it Works
+            </a>
+            <a href="#code" className="mobile-nav-item" onClick={closeMobileMenu}>
+              Integration
+            </a>
+
+            <div className="mobile-menu-divider" />
+
+            <div className="mobile-menu-cta-container">
+              {developer ? (
+                <Link to="/dashboard" className="btn btn-primary" onClick={closeMobileMenu}>
+                  Go to Dashboard
+                  <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/signup" className="btn btn-primary" onClick={closeMobileMenu}>
+                    Get Started Free
+                    <ArrowRight size={16} />
+                  </Link>
+                  <Link to="/login" className="btn btn-ghost" onClick={closeMobileMenu} style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                    Log In
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { Download, LayoutTemplate, Code, Eye, MonitorPlay, CheckCircle, Share2 } from 'lucide-react';
+import { Download, LayoutTemplate, Code, Eye, MonitorPlay, CheckCircle, Share2, Menu, X, ArrowRight } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ export default function PrebuiltUIsPage({ isPublic = false }) {
   const selectId = searchParams.get('id');
   const { developer } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [uis, setUis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -257,19 +258,21 @@ ${ui.htmlCode || ''}
       {isPublic && (
         <nav className="landing-nav" style={{ position: 'sticky', top: 0 }}>
           <div className="nav-container">
-            <Link to="/" className="nav-logo">
+            <Link to="/" className="nav-logo" onClick={() => setMobileMenuOpen(false)}>
               <div className="logo-icon">
                 <img src="/logo.png" alt="AuthEasy" className="logo-img" />
               </div>
             </Link>
+
+            {/* Desktop Navigation Links */}
             <div className="nav-links">
               <Link to="/templates" className="nav-link-templates active">
                 <span className="templates-badge-dot" />
                 UI Templates
               </Link>
-              <a href="/#features" className="nav-link-desktop">Features</a>
-              <a href="/#how-it-works" className="nav-link-desktop">How it Works</a>
-              <a href="/#code" className="nav-link-desktop">Integration</a>
+              <a href="/#features">Features</a>
+              <a href="/#how-it-works">How it Works</a>
+              <a href="/#code">Integration</a>
               {developer ? (
                 <Link to="/dashboard" className="btn btn-primary">Dashboard</Link>
               ) : (
@@ -279,7 +282,77 @@ ${ui.htmlCode || ''}
                 </>
               )}
             </div>
+
+            {/* Mobile Right Controls: Compact CTA + Hamburger Menu Toggle */}
+            <div className="mobile-nav-right">
+              {!developer ? (
+                <Link to="/signup" className="btn btn-primary mobile-quick-cta" onClick={() => setMobileMenuOpen(false)}>
+                  Get Started
+                </Link>
+              ) : (
+                <Link to="/dashboard" className="btn btn-primary mobile-quick-cta" onClick={() => setMobileMenuOpen(false)}>
+                  Dashboard
+                </Link>
+              )}
+              <button
+                className="mobile-menu-btn"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle Navigation Menu"
+              >
+                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile Dropdown Drawer */}
+          {mobileMenuOpen && (
+            <div className="mobile-menu-drawer animate-slide-down">
+              <Link
+                to="/templates"
+                className="mobile-nav-item mobile-nav-item-highlight"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="templates-badge-dot" />
+                  <span>UI Templates</span>
+                </div>
+                <span className="mobile-nav-badge">
+                  NEW
+                </span>
+              </Link>
+
+              <a href="/#features" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                Features
+              </a>
+              <a href="/#how-it-works" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                How it Works
+              </a>
+              <a href="/#code" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                Integration
+              </a>
+
+              <div className="mobile-menu-divider" />
+
+              <div className="mobile-menu-cta-container">
+                {developer ? (
+                  <Link to="/dashboard" className="btn btn-primary" onClick={() => setMobileMenuOpen(false)}>
+                    Go to Dashboard
+                    <ArrowRight size={16} />
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/signup" className="btn btn-primary" onClick={() => setMobileMenuOpen(false)}>
+                      Get Started Free
+                      <ArrowRight size={16} />
+                    </Link>
+                    <Link to="/login" className="btn btn-ghost" onClick={() => setMobileMenuOpen(false)} style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                      Log In
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </nav>
       )}
 
