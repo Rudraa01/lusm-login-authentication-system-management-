@@ -4,7 +4,8 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, Key, Copy, Eye, EyeOff, RefreshCw, Users,
-  Shield, Trash2, Ban, CheckCircle, Search, Loader2, Edit2, Mail, Sparkles, X
+  Shield, Trash2, Ban, CheckCircle, Search, Loader2, Edit2, Mail, Sparkles, X,
+  Globe, Smartphone, Terminal, Check, ExternalLink
 } from 'lucide-react';
 import './DashboardPages.css';
 
@@ -21,7 +22,15 @@ export default function ProjectDetailPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [expandedUser, setExpandedUser] = useState(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
-  const [activePromptTab, setActivePromptTab] = useState('connect');
+  const [activePromptTab, setActivePromptTab] = useState('web');
+  const [copiedSnippet, setCopiedSnippet] = useState(null);
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSnippet(key);
+    toast.success('Copied to clipboard!');
+    setTimeout(() => setCopiedSnippet(null), 2000);
+  };
 
   useEffect(() => {
     fetchProject();
@@ -416,7 +425,7 @@ export default function ProjectDetailPage() {
             <div className="ai-prompt-modal-header">
               <div className="ai-prompt-modal-title">
                 <Sparkles size={18} style={{ color: 'var(--accent-cyan)' }} />
-                <span>AI Developer Prompts</span>
+                <span>AI Developer Prompts & SDK Setup</span>
               </div>
               <button className="ai-prompt-modal-close" onClick={() => setShowPromptModal(false)}>
                 <X size={18} />
@@ -424,107 +433,269 @@ export default function ProjectDetailPage() {
             </div>
             
             <div className="ai-prompt-modal-body">
+              {/* Platform Selector Tabs */}
               <div className="ai-prompt-tabs-container">
                 <button
-                  className={`ai-prompt-tab-btn ${activePromptTab === 'connect' ? 'active' : ''}`}
-                  onClick={() => setActivePromptTab('connect')}
+                  className={`ai-prompt-tab-btn ${activePromptTab === 'web' ? 'active' : ''}`}
+                  onClick={() => setActivePromptTab('web')}
                 >
-                  Connect API in your App
+                  <Globe size={15} />
+                  <span>Web (React)</span>
                 </button>
                 <button
-                  className={`ai-prompt-tab-btn ${activePromptTab === 'design' ? 'active' : ''}`}
-                  onClick={() => setActivePromptTab('design')}
+                  className={`ai-prompt-tab-btn ${activePromptTab === 'flutter' ? 'active' : ''}`}
+                  onClick={() => setActivePromptTab('flutter')}
                 >
-                  Connect & Design Login
+                  <Smartphone size={15} />
+                  <span>Flutter</span>
+                </button>
+                <button
+                  className={`ai-prompt-tab-btn ${activePromptTab === 'rn' ? 'active' : ''}`}
+                  onClick={() => setActivePromptTab('rn')}
+                >
+                  <Smartphone size={15} />
+                  <span>React Native</span>
+                </button>
+                <button
+                  className={`ai-prompt-tab-btn ${activePromptTab === 'api' ? 'active' : ''}`}
+                  onClick={() => setActivePromptTab('api')}
+                >
+                  <Terminal size={15} />
+                  <span>REST API</span>
                 </button>
               </div>
 
-              {activePromptTab === 'connect' ? (
-                <>
-                  <p className="ai-prompt-desc">
-                    Use this prompt to generate a production-ready authentication helper/service in your app to communicate with AuthEasy.
-                  </p>
-                  <div className="ai-prompt-code-wrapper">
-                    <div className="ai-prompt-code-header">
-                      <span>Integration Prompt</span>
-                      <span>Markdown</span>
-                    </div>
-                    <pre className="ai-prompt-code-content">{`You are an expert developer. I want to integrate authentication into my application using the AuthEasy authentication service.
-
-Here are the configuration details:
-- **API Base URL**: ${window.location.origin}
-- **API Key**: ${project.apiKey}
-- **Project ID**: ${project.id}
-
-Please create an authentication service module (e.g., \`authService.js\` or \`auth.service.ts\`) using fetch or axios. It should implement the following API calls to the AuthEasy backend:
-
-1. **User Registration**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/register\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "password": "...", "name": "...", "contactNumber": "..." }\`
-   - **Note**: The backend enforces a strict password policy: Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other special characters are allowed). Include client-side validation for this rule.
-   - **Response**: Returns \`{ success: true, message: "...", data: { userId: "...", email: "...", isVerified: false } }\`.
-
-2. **Verify OTP (Signup Verification)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/verify-otp\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "otp": "..." }\`
-   - **Response**: Returns token credentials: \`{ success: true, data: { user: { id, email, name, contactNumber }, accessToken, refreshToken } }\`.
-
-3. **User Login**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/login\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "password": "..." }\`
-   - **Response**: Returns tokens: \`{ success: true, data: { user, accessToken, refreshToken } }\`.
-
-4. **Forgot Password (Request Reset OTP)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/forgot-password\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "..." }\` // Can be email OR phone
-
-5. **Reset Password (Submit Reset OTP)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/reset-password\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "otp": "...", "newPassword": "..." }\` // email can be email OR phone
-   - **Note**: The backend password policy also applies here.
-
-6. **Get Current User Profile**
-   - **Endpoint**: \`GET ${window.location.origin}/api/v1/auth/me\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Authorization": "Bearer <accessToken>" }\`
-
-Please write complete, production-grade helper code, configure session management (saving the tokens securely in localStorage or cookies), and export these methods so I can easily use them in my application.`}</pre>
+              {/* Step 1: Install (for SDK platforms) */}
+              {activePromptTab !== 'api' && (
+                <div className="ai-prompt-step">
+                  <div className="ai-prompt-step-header">
+                    <span className="ai-prompt-step-num">1</span>
+                    <span className="ai-prompt-step-title">Install Official Package</span>
                   </div>
-                </>
-              ) : (
-                <>
-                  <p className="ai-prompt-desc">
-                    Use this prompt to instruct your AI editor (Cursor, Windsurf, etc.) to analyze your existing codebase styling and create a matching login/signup/OTP flow.
-                  </p>
-                  <div className="ai-prompt-code-wrapper">
-                    <div className="ai-prompt-code-header">
-                      <span>UI & UX Prompt</span>
-                      <span>Markdown</span>
-                    </div>
-                    <pre className="ai-prompt-code-content">{`You are a senior UI/UX engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing application, integrated with the AuthEasy backend service.
-
-Here are the integration details:
-- **API Base URL**: ${window.location.origin}
-- **API Key**: \${project.apiKey}
-- **Project ID**: \${project.id}
-
-Your task is to:
-1. **Analyze Existing Theme & Styling**: First, examine the existing codebase's styles, design system, colors, layout patterns, and libraries.
-2. **Build and Design the Auth Pages**: Create stunning, modern, and highly interactive pages/components for:
-   - **Sign Up / Registration** (Fields: Name, Email, Phone Number (optional), Password). Include strong password validation: the password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other symbols allowed). Show real-time strength validation.
-   - **OTP Verification Screen** (Beautiful multi-digit input or clean code input field for email verification).
-   - **Login Page** (Fields: Email or Phone Number, Password).
-   - **Forgot Password Screen** (Enter email or phone number to send OTP).
-   - **Reset Password Screen** (Enter OTP and new strong password).
-3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`${window.location.origin}/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: \${project.apiKey}\` header.
-4. **Visual & Styling Requirements**: Make the UI look extremely premium, mimicking high-end authentication designs (like Clerk, Vercel, or Stripe). Include subtle animations (fade-in, slide-up, loading spinner states) and ensure the layout is fully responsive and integrates perfectly with my application's theme and styles. Please build everything directly in the app's existing visual design language.`}</pre>
+                  <div className="ai-prompt-snippet-box">
+                    <span className="ai-prompt-snippet-code">
+                      {activePromptTab === 'web' && 'npm install autheasy-react'}
+                      {activePromptTab === 'flutter' && 'flutter pub add autheasy_flutter'}
+                      {activePromptTab === 'rn' && 'npm install autheasy-react-native'}
+                    </span>
+                    <button
+                      className="ai-prompt-copy-sm-btn"
+                      onClick={() =>
+                        copyToClipboard(
+                          activePromptTab === 'web'
+                            ? 'npm install autheasy-react'
+                            : activePromptTab === 'flutter'
+                            ? 'flutter pub add autheasy_flutter'
+                            : 'npm install autheasy-react-native',
+                          'install'
+                        )
+                      }
+                    >
+                      {copiedSnippet === 'install' ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedSnippet === 'install' ? 'Copied' : 'Copy'}
+                    </button>
                   </div>
-                </>
+                </div>
               )}
+
+              {/* Step 2: Quick Start Code */}
+              <div className="ai-prompt-step">
+                <div className="ai-prompt-step-header">
+                  <span className="ai-prompt-step-num">{activePromptTab === 'api' ? '1' : '2'}</span>
+                  <span className="ai-prompt-step-title">
+                    {activePromptTab === 'api' ? 'Quick Request Test' : 'Quick Provider / Init Setup'}
+                  </span>
+                </div>
+                <div className="ai-prompt-snippet-box" style={{ alignItems: 'flex-start' }}>
+                  <pre
+                    className="ai-prompt-snippet-code"
+                    style={{ margin: 0, padding: '2px 0', lineHeight: 1.5 }}
+                  >
+                    {activePromptTab === 'web' &&
+`import { AuthEasyProvider } from 'autheasy-react';
+
+<AuthEasyProvider apiKey="${project?.apiKey}">
+  <App />
+</AuthEasyProvider>`}
+                    {activePromptTab === 'flutter' &&
+`import 'package:autheasy_flutter/autheasy_flutter.dart';
+
+void main() {
+  AuthEasy.initialize(apiKey: '${project?.apiKey}');
+  runApp(const MyApp());
+}`}
+                    {activePromptTab === 'rn' &&
+`import { AuthEasyProvider } from 'autheasy-react-native';
+
+export default function App() {
+  return (
+    <AuthEasyProvider apiKey="${project?.apiKey}">
+      <MainApp />
+    </AuthEasyProvider>
+  );
+}`}
+                    {activePromptTab === 'api' &&
+`curl -X POST ${window.location.origin}/api/v1/auth/login \\
+  -H "x-api-key: ${project?.apiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"email":"user@example.com","password":"Password@123"}'`}
+                  </pre>
+                  <button
+                    className="ai-prompt-copy-sm-btn"
+                    onClick={() => {
+                      const snippet =
+                        activePromptTab === 'web'
+                          ? `import { AuthEasyProvider } from 'autheasy-react';\n\n<AuthEasyProvider apiKey="${project?.apiKey}">\n  <App />\n</AuthEasyProvider>`
+                          : activePromptTab === 'flutter'
+                          ? `import 'package:autheasy_flutter/autheasy_flutter.dart';\n\nvoid main() {\n  AuthEasy.initialize(apiKey: '${project?.apiKey}');\n  runApp(const MyApp());\n}`
+                          : activePromptTab === 'rn'
+                          ? `import { AuthEasyProvider } from 'autheasy-react-native';\n\nexport default function App() {\n  return (\n    <AuthEasyProvider apiKey="${project?.apiKey}">\n      <MainApp />\n    </AuthEasyProvider>\n  );\n}`
+                          : `curl -X POST ${window.location.origin}/api/v1/auth/login \\\n  -H "x-api-key: ${project?.apiKey}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"email":"user@example.com","password":"Password@123"}'`;
+                      copyToClipboard(snippet, 'init');
+                    }}
+                  >
+                    {copiedSnippet === 'init' ? <Check size={12} /> : <Copy size={12} />}
+                    {copiedSnippet === 'init' ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 3: Vibe Coder AI Prompt */}
+              <div className="ai-prompt-step">
+                <div className="ai-prompt-step-header">
+                  <span className="ai-prompt-step-num">{activePromptTab === 'api' ? '2' : '3'}</span>
+                  <span className="ai-prompt-step-title">
+                    Vibe Coder AI Prompt (Cursor / Windsurf / Claude / ChatGPT)
+                  </span>
+                </div>
+                <p className="ai-prompt-desc" style={{ margin: 0, padding: '10px 14px' }}>
+                  {activePromptTab === 'web' && 'Paste this prompt in your AI code editor to build a fully styled React login, signup, and OTP verification flow.'}
+                  {activePromptTab === 'flutter' && 'Paste this prompt in your AI editor to generate complete Flutter auth screens with local secure storage and clean widgets.'}
+                  {activePromptTab === 'rn' && 'Paste this prompt in your AI editor to create mobile-first React Native auth screens with keyboard handling and token storage.'}
+                  {activePromptTab === 'api' && 'Paste this prompt to create a production-ready HTTP auth helper for any framework or backend language.'}
+                </p>
+
+                <div className="ai-prompt-code-wrapper">
+                  <div className="ai-prompt-code-header">
+                    <span>{activePromptTab.toUpperCase()} Integration Prompt</span>
+                    <span>Markdown</span>
+                  </div>
+                  <pre className="ai-prompt-code-content">
+                    {activePromptTab === 'web' &&
+`You are a senior React engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing React application using AuthEasy.
+
+Configuration:
+- **API Base URL**: ${window.location.origin}
+- **API Key**: ${project?.apiKey}
+- **Project ID**: ${project?.id}
+- **Recommended SDK**: \`autheasy-react\` (npm)
+
+Password Policy (Strict backend requirement):
+The backend validates that all passwords must:
+1. Be at least 8 characters long
+2. Contain at least 1 uppercase letter (A-Z)
+3. Contain at least 1 lowercase letter (a-z)
+4. Contain at least 1 number (0-9)
+5. Contain exactly one '@' symbol (no other special characters allowed!)
+Example valid password: "MyPassword@123"
+
+Tasks:
+1. Wrap root with \`<AuthEasyProvider apiKey="${project?.apiKey}">\`.
+2. Inspect the existing app design system (Tailwind CSS, CSS variables, components) to match its exact aesthetic.
+3. Build responsive auth components:
+   - **Login Screen**: email & password fields, forgot password link, loading spinner.
+   - **Sign Up Screen**: name, email, password with live password checklist (8+ chars, uppercase, lowercase, number, single '@').
+   - **OTP Verification Screen**: 6-digit verification code input with auto-advance and countdown resend timer.
+   - **Forgot / Reset Password Screens**: email step followed by OTP + new password step.
+4. Hook Integration: Use \`const { user, login, signup, verifyOtp, forgotPassword, resetPassword, logout, loading, error } = useAuthEasy();\` to wire up all actions.`}
+
+                    {activePromptTab === 'flutter' &&
+`You are a senior Flutter mobile engineer and AI agent coder. I want to build a complete, production-grade mobile authentication flow in my Flutter application using AuthEasy.
+
+Configuration:
+- **API Base URL**: ${window.location.origin}
+- **API Key**: ${project?.apiKey}
+- **Project ID**: ${project?.id}
+- **Recommended Package**: \`autheasy_flutter\` (or HTTP/Dio with \`flutter_secure_storage\`)
+
+Password Policy (Strictly validated by AuthEasy backend):
+Passwords must have at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other symbols). Example: "FlutterApp@2026".
+
+Tasks:
+1. Initialize in \`main.dart\`: \`AuthEasy.initialize(apiKey: '${project?.apiKey}')\` or configure an \`AuthService\` singleton.
+2. Match the app's existing ThemeData (colors, fonts, border radii, dark/light theme).
+3. Build complete screens with smooth transitions and loading states:
+   - **LoginScreen**: Email & password inputs, toggleable obscureText eye icon, forgot password button, error snackbars.
+   - **SignUpScreen**: Full name, email, password input with dynamic requirement checklist (8+ chars, 1 uppercase, 1 lowercase, 1 number, single '@').
+   - **OtpVerificationScreen**: 6-digit PIN input with auto-verification and 60-second resend countdown timer.
+   - **ForgotPasswordScreen & ResetPasswordScreen**: Request OTP to email, then input OTP + new password.
+4. Token Storage: Save JWT tokens securely using \`flutter_secure_storage\`. Provide an AuthState notifier managing \`isAuthenticated\`, \`currentUser\`, and auto-login on app launch.`}
+
+                    {activePromptTab === 'rn' &&
+`You are a senior React Native / Expo developer and AI agent coder. I want to build a complete native mobile authentication flow in my React Native application using AuthEasy.
+
+Configuration:
+- **API Base URL**: ${window.location.origin}
+- **API Key**: ${project?.apiKey}
+- **Project ID**: ${project?.id}
+- **Recommended Package**: \`autheasy-react-native\` (or Axios with \`expo-secure-store\` / AsyncStorage)
+
+Strict Password Policy:
+Passwords must: be min 8 characters, include 1 uppercase, 1 lowercase, 1 digit, and exactly one '@' symbol. Example: "ReactNative@77".
+
+Tasks:
+1. Wrap root app with \`<AuthEasyProvider apiKey="${project?.apiKey}">\`.
+2. Analyze styling setup (NativeWind / Tailwind, StyleSheet, React Native Paper, or custom theme) and adopt the exact same patterns.
+3. Build native mobile screens:
+   - **LoginScreen**: Email and password inputs, show/hide password toggle, forgot password link, loading spinner.
+   - **SignUpScreen**: Name, email, password with live validation checklist.
+   - **OtpScreen**: 6 individual digit input boxes with auto-focus next on type and backspace support.
+   - **ResetPasswordScreen**: Enter OTP and new password with validation.
+4. Wrap screens with \`KeyboardAvoidingView\` for clean keyboard dismiss. Persist tokens securely using \`expo-secure-store\` or \`@react-native-async-storage/async-storage\`.
+5. Expose \`useAuth()\` hook with \`{ user, login, signup, verifyOtp, forgotPassword, resetPassword, logout, loading }\`.`}
+
+                    {activePromptTab === 'api' &&
+`You are an expert backend and API integration engineer. I want to integrate authentication into my application using the AuthEasy REST API.
+
+Configuration:
+- **Base URL**: ${window.location.origin}
+- **API Key**: ${project?.apiKey}
+- **Project ID**: ${project?.id}
+- **Required Header**: \`x-api-key: ${project?.apiKey}\`
+- **Content-Type**: \`application/json\`
+
+Backend Password Rule:
+Passwords must have at least 8 characters, at least 1 uppercase letter, 1 lowercase letter, 1 digit, and exactly one '@' symbol (no other special symbols allowed).
+
+API Endpoints:
+1. User Registration: POST \`${window.location.origin}/api/v1/auth/register\`
+   Body: \`{ "name": "...", "email": "...", "password": "...", "contactNumber": "..." }\`
+2. Verify OTP: POST \`${window.location.origin}/api/v1/auth/verify-otp\`
+   Body: \`{ "email": "...", "otp": "..." }\`
+   Response: \`{ "success": true, "data": { "user": { "id": "...", "email": "...", "name": "..." }, "accessToken": "...", "refreshToken": "..." } }\`
+3. User Login: POST \`${window.location.origin}/api/v1/auth/login\`
+   Body: \`{ "email": "...", "password": "..." }\`
+   Response: \`{ "success": true, "data": { "user": { ... }, "accessToken": "...", "refreshToken": "..." } }\`
+4. Forgot Password: POST \`${window.location.origin}/api/v1/auth/forgot-password\`
+   Body: \`{ "email": "..." }\`
+5. Reset Password: POST \`${window.location.origin}/api/v1/auth/reset-password\`
+   Body: \`{ "email": "...", "otp": "...", "newPassword": "..." }\`
+6. Current User Profile: GET \`${window.location.origin}/api/v1/auth/me\`
+   Headers: \`x-api-key: ${project?.apiKey}\`, \`Authorization: Bearer <accessToken>\`
+
+Please create an authentication service module implementing these API calls with robust error handling, token refresh logic, and typed responses.`}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Link to Full SDK Docs */}
+              <div className="ai-prompt-docs-banner">
+                <span>Looking for complete package reference, prop types, and examples?</span>
+                <Link to="/dashboard/sdk-docs" className="ai-prompt-docs-link">
+                  <span>View Full SDK Docs</span>
+                  <ExternalLink size={13} />
+                </Link>
+              </div>
             </div>
 
             <div className="ai-prompt-modal-footer">
@@ -534,74 +705,111 @@ Your task is to:
               <button
                 className="btn btn-primary"
                 onClick={() => {
-                  const text = activePromptTab === 'connect' 
-                    ? `You are an expert developer. I want to integrate authentication into my application using the AuthEasy authentication service.
+                  let text = '';
+                  if (activePromptTab === 'web') {
+                    text = `You are a senior React engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing React application using AuthEasy.
 
-Here are the configuration details:
-- **API Base URL**: ${window.location.origin}
-- **API Key**: ${project.apiKey}
-- **Project ID**: ${project.id}
+Configuration:
+- API Base URL: ${window.location.origin}
+- API Key: ${project?.apiKey}
+- Project ID: ${project?.id}
+- Recommended SDK: autheasy-react (npm)
 
-Please create an authentication service module (e.g., \`authService.js\` or \`auth.service.ts\`) using fetch or axios. It should implement the following API calls to the AuthEasy backend:
+Password Policy (Strict backend requirement):
+The backend validates that all passwords must:
+1. Be at least 8 characters long
+2. Contain at least 1 uppercase letter (A-Z)
+3. Contain at least 1 lowercase letter (a-z)
+4. Contain at least 1 number (0-9)
+5. Contain exactly one '@' symbol (no other special characters allowed!)
+Example valid password: "MyPassword@123"
 
-1. **User Registration**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/register\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "password": "...", "name": "..." }\`
-   - **Note**: The backend enforces a strict password policy: Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other special characters are allowed). Include client-side validation for this rule.
-   - **Response**: Returns \`{ success: true, message: "...", data: { userId: "...", email: "...", isVerified: false } }\`.
+Tasks:
+1. Wrap root with <AuthEasyProvider apiKey="${project?.apiKey}">.
+2. Inspect the existing app design system (Tailwind CSS, CSS variables, components) to match its exact aesthetic.
+3. Build responsive auth components:
+   - Login Screen: email & password fields, forgot password link, loading spinner.
+   - Sign Up Screen: name, email, password with live password checklist (8+ chars, uppercase, lowercase, number, single '@').
+   - OTP Verification Screen: 6-digit verification code input with auto-advance and countdown resend timer.
+   - Forgot / Reset Password Screens: email step followed by OTP + new password step.
+4. Hook Integration: Use const { user, login, signup, verifyOtp, forgotPassword, resetPassword, logout, loading, error } = useAuthEasy(); to wire up all actions.`;
+                  } else if (activePromptTab === 'flutter') {
+                    text = `You are a senior Flutter mobile engineer and AI agent coder. I want to build a complete, production-grade mobile authentication flow in my Flutter application using AuthEasy.
 
-2. **Verify OTP (Signup Verification)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/verify-otp\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "otp": "..." }\`
-   - **Response**: Returns token credentials: \`{ success: true, data: { user: { id, email, name }, accessToken, refreshToken } }\`.
+Configuration:
+- API Base URL: ${window.location.origin}
+- API Key: ${project?.apiKey}
+- Project ID: ${project?.id}
+- Recommended Package: autheasy_flutter (or HTTP/Dio with flutter_secure_storage)
 
-3. **User Login**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/login\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "password": "..." }\`
-   - **Response**: Returns tokens: \`{ success: true, data: { user, accessToken, refreshToken } }\`.
+Password Policy (Strictly validated by AuthEasy backend):
+Passwords must have at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other symbols). Example: "FlutterApp@2026".
 
-4. **Forgot Password (Request Reset OTP)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/forgot-password\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "..." }\`
+Tasks:
+1. Initialize in main.dart: AuthEasy.initialize(apiKey: '${project?.apiKey}') or configure an AuthService singleton.
+2. Match the app's existing ThemeData (colors, fonts, border radii, dark/light theme).
+3. Build complete screens with smooth transitions and loading states:
+   - LoginScreen: Email & password inputs, toggleable obscureText eye icon, forgot password button, error snackbars.
+   - SignUpScreen: Full name, email, password input with dynamic requirement checklist (8+ chars, 1 uppercase, 1 lowercase, 1 number, single '@').
+   - OtpVerificationScreen: 6-digit PIN input with auto-verification and 60-second resend countdown timer.
+   - ForgotPasswordScreen & ResetPasswordScreen: Request OTP to email, then input OTP + new password.
+4. Token Storage: Save JWT tokens securely using flutter_secure_storage. Provide an AuthState notifier managing isAuthenticated, currentUser, and auto-login on app launch.`;
+                  } else if (activePromptTab === 'rn') {
+                    text = `You are a senior React Native / Expo developer and AI agent coder. I want to build a complete native mobile authentication flow in my React Native application using AuthEasy.
 
-5. **Reset Password (Submit Reset OTP)**
-   - **Endpoint**: \`POST ${window.location.origin}/api/v1/auth/reset-password\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Content-Type": "application/json" }\`
-   - **Body**: \`{ "email": "...", "otp": "...", "newPassword": "..." }\`
-   - **Note**: The backend password policy also applies here.
+Configuration:
+- API Base URL: ${window.location.origin}
+- API Key: ${project?.apiKey}
+- Project ID: ${project?.id}
+- Recommended Package: autheasy-react-native (or Axios with expo-secure-store / AsyncStorage)
 
-6. **Get Current User Profile**
-   - **Endpoint**: \`GET ${window.location.origin}/api/v1/auth/me\`
-   - **Headers**: \`{ "x-api-key": "${project.apiKey}", "Authorization": "Bearer <accessToken>" }\`
+Strict Password Policy:
+Passwords must: be min 8 characters, include 1 uppercase, 1 lowercase, 1 digit, and exactly one '@' symbol. Example: "ReactNative@77".
 
-Please write complete, production-grade helper code, configure session management (saving the tokens securely in localStorage or cookies), and export these methods so I can easily use them in my application.`
-                    : `You are a senior UI/UX engineer and AI agent coder. I want to build a complete authentication flow (Login, Sign Up, OTP Verification, Forgot Password, and Reset Password) in my existing application, integrated with the AuthEasy backend service.
+Tasks:
+1. Wrap root app with <AuthEasyProvider apiKey="${project?.apiKey}">.
+2. Analyze styling setup (NativeWind / Tailwind, StyleSheet, React Native Paper, or custom theme) and adopt the exact same patterns.
+3. Build native mobile screens:
+   - LoginScreen: Email and password inputs, show/hide password toggle, forgot password link, loading spinner.
+   - SignUpScreen: Name, email, password with live validation checklist.
+   - OtpScreen: 6 individual digit input boxes with auto-focus next on type and backspace support.
+   - ResetPasswordScreen: Enter OTP and new password with validation.
+4. Wrap screens with KeyboardAvoidingView for clean keyboard dismiss. Persist tokens securely using expo-secure-store or @react-native-async-storage/async-storage.
+5. Expose useAuth() hook with { user, login, signup, verifyOtp, forgotPassword, resetPassword, logout, loading }.`;
+                  } else {
+                    text = `You are an expert backend and API integration engineer. I want to integrate authentication into my application using the AuthEasy REST API.
 
-Here are the integration details:
-- **API Base URL**: ${window.location.origin}
-- **API Key**: ${project.apiKey}
-- **Project ID**: ${project.id}
+Configuration:
+- Base URL: ${window.location.origin}
+- API Key: ${project?.apiKey}
+- Project ID: ${project?.id}
+- Required Header: x-api-key: ${project?.apiKey}
+- Content-Type: application/json
 
-Your task is to:
-1. **Analyze Existing Theme & Styling**: First, examine the existing codebase's styles, design system, colors, layout patterns, and libraries (e.g., check if we are using Tailwind CSS, vanilla CSS variables, CSS modules, glassmorphism, fonts, border radii, or libraries like Lucide React/Material-UI).
-2. **Build and Design the Auth Pages**: Create stunning, modern, and highly interactive pages/components for:
-   - **Sign Up / Registration** (Fields: Name, Email, Password). Include strong password validation: the password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and exactly one '@' symbol (no other symbols allowed). Show real-time strength validation.
-   - **OTP Verification Screen** (Beautiful multi-digit input or clean code input field for email verification).
-   - **Login Page** (Fields: Email, Password).
-   - **Forgot Password Screen** (Enter email to send OTP).
-   - **Reset Password Screen** (Enter OTP and new strong password).
-3. **Integration**: Wire up these UI components with API requests to the AuthEasy backend endpoints at \`${window.location.origin}/api/v1/auth/...\` (register, verify-otp, login, forgot-password, reset-password). Make sure all requests include the \`x-api-key: ${project.apiKey}\` header.
-4. **Visual & Styling Requirements**: Make the UI look extremely premium, mimicking high-end authentication designs (like Clerk, Vercel, or Stripe). Include subtle animations (fade-in, slide-up, loading spinner states) and ensure the layout is fully responsive and integrates perfectly with my application's theme and styles. Please build everything directly in the app's existing visual design language.`;
-                  
+Backend Password Rule:
+Passwords must have at least 8 characters, at least 1 uppercase letter, 1 lowercase letter, 1 digit, and exactly one '@' symbol (no other special symbols allowed).
+
+API Endpoints:
+1. User Registration: POST ${window.location.origin}/api/v1/auth/register
+   Body: { "name": "...", "email": "...", "password": "...", "contactNumber": "..." }
+2. Verify OTP: POST ${window.location.origin}/api/v1/auth/verify-otp
+   Body: { "email": "...", "otp": "..." }
+3. User Login: POST ${window.location.origin}/api/v1/auth/login
+   Body: { "email": "...", "password": "..." }
+4. Forgot Password: POST ${window.location.origin}/api/v1/auth/forgot-password
+   Body: { "email": "..." }
+5. Reset Password: POST ${window.location.origin}/api/v1/auth/reset-password
+   Body: { "email": "...", "otp": "...", "newPassword": "..." }
+6. Current User Profile: GET ${window.location.origin}/api/v1/auth/me
+   Headers: x-api-key: ${project?.apiKey}, Authorization: Bearer <accessToken>
+
+Please create an authentication service module implementing these API calls with robust error handling, token refresh logic, and typed responses.`;
+                  }
                   navigator.clipboard.writeText(text);
-                  toast.success('Prompt copied to clipboard!');
+                  toast.success(`${activePromptTab.toUpperCase()} prompt copied to clipboard!`);
                 }}
               >
-                <Copy size={14} /> Copy Prompt
+                <Copy size={14} /> Copy {activePromptTab === 'api' ? 'REST API' : activePromptTab.toUpperCase()} Prompt
               </button>
             </div>
           </div>

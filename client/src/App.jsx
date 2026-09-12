@@ -12,6 +12,7 @@ import DashboardHome from './pages/DashboardHome';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import DocsPage from './pages/DocsPage';
+import SdkDocsPage from './pages/SdkDocsPage';
 import SettingsPage from './pages/SettingsPage';
 import PrebuiltUIsPage from './pages/PrebuiltUIsPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -155,6 +156,7 @@ function App() {
               <Route path="projects" element={<ProjectsPage />} />
               <Route path="projects/:id" element={<ProjectDetailPage />} />
               <Route path="uis" element={<PrebuiltUIsPage />} />
+              <Route path="sdk-docs" element={<SdkDocsPage />} />
               <Route path="docs" element={<DocsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>

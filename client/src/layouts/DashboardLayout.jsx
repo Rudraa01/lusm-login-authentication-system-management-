@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, FolderKanban, FileText, Settings,
-  LogOut, ChevronRight, LayoutTemplate
+  LogOut, ChevronRight, LayoutTemplate, Package
 } from 'lucide-react';
 import './DashboardLayout.css';
 
@@ -10,7 +10,8 @@ const navItems = [
   { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Overview', end: true },
   { path: '/dashboard/projects', icon: <FolderKanban size={20} />, label: 'Projects' },
   { path: '/dashboard/uis', icon: <LayoutTemplate size={20} />, label: 'Pre-built UIs' },
-  { path: '/dashboard/docs', icon: <FileText size={20} />, label: 'API Docs' },
+  { path: '/dashboard/sdk-docs', icon: <Package size={20} />, label: 'SDK Docs' },
+  { path: '/dashboard/docs', icon: <FileText size={20} />, label: 'REST API' },
   { path: '/dashboard/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];
 

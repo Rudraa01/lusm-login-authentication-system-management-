@@ -26,3 +26,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies

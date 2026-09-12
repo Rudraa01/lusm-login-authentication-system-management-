@@ -1,0 +1,50 @@
+{
+  "name": "autheasy-react-native",
+  "version": "1.0.0",
+  "description": "Official React Native SDK for AuthEasy - Drop-in authentication for any React Native app",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "autheasy",
+    "authentication",
+    "react-native",
+    "auth",
+    "login",
+    "signup",
+    "otp",
+    "jwt",
+    "mobile"
+  ],
+  "author": "AuthEasy",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rudraa01/lusm-login-authentication-system-management-.git"
+  },
+  "homepage": "https://autheasy.me",
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-native": ">=0.70.0",
+    "@react-native-async-storage/async-storage": ">=1.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.0.0",
+    "react-native": "^0.73.0",
+    "@react-native-async-storage/async-storage": "^1.21.0",
+    "rollup": "^4.0.0",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-babel": "^6.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/preset-react": "^7.0.0"
+  },
+  "scripts": {
+    "build": "rollup -c"
+  }
+}
