@@ -222,7 +222,6 @@ export default function LandingPage() {
           <div className="nav-links">
             <Link to="/templates">UI Templates</Link>
             <a href="#platforms">Platforms</a>
-            <a href="#ai-first">AI Vibe Coder</a>
             <a href="#features">Features</a>
             <a href="#code">Integration</a>
             {developer ? (
@@ -268,9 +267,6 @@ export default function LandingPage() {
             </Link>
             <a href="#platforms" className="mobile-nav-item" onClick={closeMobileMenu}>
               Platforms
-            </a>
-            <a href="#ai-first" className="mobile-nav-item" onClick={closeMobileMenu}>
-              AI Vibe Coder
             </a>
             <a href="#features" className="mobile-nav-item" onClick={closeMobileMenu}>
               Features
